@@ -7,6 +7,18 @@ import Credentials from "next-auth/providers/credentials";
 import { verifyEmailOtp } from "@/lib/auth/otp";
 import { upsertUserByEmail } from "@/lib/auth/users";
 
+// Referral attribution: нэвтрэх үед "ref" cookie-г уншина (RefCapture-аас тавигдсан).
+// Auth.js callback хүсэлтийн контекстэд ажилладаг тул next/headers боломжтой; алдвал алгасна.
+async function readRefCookie() {
+  try {
+    const { cookies } = await import("next/headers");
+    const c = await cookies();
+    return c.get("ref")?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
@@ -24,7 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!email || !code) return null;
         const ok = await verifyEmailOtp(email, code);
         if (!ok) return null;
-        const u = await upsertUserByEmail(email);
+        const u = await upsertUserByEmail(email, { referredByCode: await readRefCookie() });
         if (!u) return null;
         return { id: u.id, email: u.email, name: u.display_name, role: u.role };
       },
@@ -45,6 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const u = await upsertUserByEmail(email, {
             name: user?.name ?? profile?.name,
             image: user?.image ?? profile?.picture,
+            referredByCode: await readRefCookie(),
           });
           if (!u) return false;
           user.id = u.id;

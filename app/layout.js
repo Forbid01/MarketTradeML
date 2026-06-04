@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import InstallPrompt from "@/components/InstallPrompt";
+import RefCapture from "@/components/RefCapture";
 import { getLocale } from "@/lib/i18n/server";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 import { LocaleProvider } from "@/lib/i18n/client";
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }) {
           <main className="mx-auto w-full max-w-5xl px-4 py-6">{children}</main>
           <InstallPrompt />
           <ServiceWorkerRegister />
+          <RefCapture />
         </LocaleProvider>
       </body>
     </html>
