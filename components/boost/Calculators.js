@@ -7,7 +7,7 @@ import { useT } from "@/lib/i18n/client";
 import { formatMNT } from "@/lib/format";
 import { createBoostOrder } from "@/lib/actions";
 import { BOOST, RANK_LADDER, rankMatches, boostTotal } from "@/lib/boost";
-import { Star, ShieldCheck, RefreshCw, ArrowRight, BadgeCheck } from "@/components/icons";
+import { Star, ShieldCheck, RefreshCw, ArrowRight, BadgeCheck, Target, GraduationCap } from "@/components/icons";
 
 function Toggle({ on, onClick, children }) {
   return (
@@ -23,8 +23,9 @@ function Toggle({ on, onClick, children }) {
   );
 }
 
-function Card({ icon, title, desc, perMatch, matches, total, service, config, children }) {
+function Card({ icon, title, desc, perMatch, matches, total, service, config, unit, perLabel, children }) {
   const t = useT();
+  const countLabel = unit || t("boost.matches");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -48,7 +49,7 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, ch
           <p className="mt-1 text-sm text-slate-400">{desc}</p>
         </div>
         <div className="shrink-0 rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-3 py-1.5 text-right">
-          <div className="text-[10px] uppercase tracking-wide text-slate-400">{t("boost.perMatch")}</div>
+          <div className="text-[10px] uppercase tracking-wide text-slate-400">{perLabel || t("boost.perMatch")}</div>
           <div className="text-sm font-bold text-[#38BDF8]">{formatMNT(perMatch)}</div>
         </div>
       </div>
@@ -65,7 +66,7 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, ch
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
         <div>
           <div className="text-[10px] uppercase tracking-wide text-slate-500">
-            {t("boost.total")} · {matches} {t("boost.matches")}
+            {t("boost.total")} · {matches} {countLabel}
           </div>
           <div className="bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-2xl font-extrabold text-transparent">
             {formatMNT(total)}
@@ -180,6 +181,53 @@ export function SquadRentCalc() {
       <Slider label={t("boost.squad.matchesLabel")} value={m} min={BOOST.squad.min} max={BOOST.squad.max} onChange={setM} />
       <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
         <BadgeCheck size={14} className="text-[#38BDF8]" /> {t("boost.squad.note")}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Toggle on={express} onClick={() => setExpress((v) => !v)}>{t("boost.express")}</Toggle>
+      </div>
+    </Card>
+  );
+}
+
+export function PlacementCalc() {
+  const t = useT();
+  const [m, setM] = useState(BOOST.placement.def);
+  const [express, setExpress] = useState(false);
+  const total = useMemo(() => boostTotal(m, BOOST.placement.perMatch, { express }), [m, express]);
+  return (
+    <Card
+      icon={<Target size={20} className="text-[#38BDF8]" />}
+      title={t("boost.placement.title")} desc={t("boost.placement.desc")}
+      perMatch={BOOST.placement.perMatch} matches={m} total={total}
+      service="placement" config={{ matches: m, express }}
+    >
+      <Slider label={t("boost.placement.matchesLabel")} value={m} min={BOOST.placement.min} max={BOOST.placement.max} onChange={setM} />
+      <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+        <BadgeCheck size={14} className="text-[#38BDF8]" /> {t("boost.placement.note")}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Toggle on={express} onClick={() => setExpress((v) => !v)}>{t("boost.express")}</Toggle>
+      </div>
+    </Card>
+  );
+}
+
+export function CoachingCalc() {
+  const t = useT();
+  const [s, setS] = useState(BOOST.coaching.def);
+  const [express, setExpress] = useState(false);
+  const total = useMemo(() => boostTotal(s, BOOST.coaching.perMatch, { express }), [s, express]);
+  return (
+    <Card
+      icon={<GraduationCap size={20} className="text-[#F5C451]" />}
+      title={t("boost.coaching.title")} desc={t("boost.coaching.desc")}
+      perMatch={BOOST.coaching.perMatch} matches={s} total={total}
+      service="coaching" config={{ sessions: s, express }}
+      unit={t("boost.coaching.unit")} perLabel={t("boost.coaching.perUnit")}
+    >
+      <Slider label={t("boost.coaching.sessionsLabel")} value={s} min={BOOST.coaching.min} max={BOOST.coaching.max} onChange={setS} />
+      <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+        <BadgeCheck size={14} className="text-[#F5C451]" /> {t("boost.coaching.note")}
       </p>
       <div className="flex flex-wrap gap-2">
         <Toggle on={express} onClick={() => setExpress((v) => !v)}>{t("boost.express")}</Toggle>

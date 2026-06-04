@@ -1,5 +1,5 @@
 import { getT } from "@/lib/i18n/server";
-import { WinrateBoostCalc, RankBoostCalc, SquadRentCalc } from "@/components/boost/Calculators";
+import { WinrateBoostCalc, RankBoostCalc, SquadRentCalc, PlacementCalc, CoachingCalc } from "@/components/boost/Calculators";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,8 @@ export default async function BoostPage() {
         <WinrateBoostCalc />
         <RankBoostCalc />
         <SquadRentCalc />
+        <PlacementCalc />
+        <CoachingCalc />
       </div>
     </div>
   );

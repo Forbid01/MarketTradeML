@@ -40,7 +40,7 @@ export default async function BoostOrderPage({ params }) {
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#38BDF8]">{t("boost.orderTitle")}</p>
             <h1 className="mt-1 text-lg font-bold uppercase tracking-wide text-slate-50">{t(`boost.${o.service}.title`)}</h1>
             <p className="mt-1 text-xs text-slate-500">
-              {o.matches} {t("boost.matches")} · {formatDateTime(o.created_at, locale)}
+              {o.matches} {o.service === "coaching" ? t("boost.coaching.unit") : t("boost.matches")} · {formatDateTime(o.created_at, locale)}
             </p>
           </div>
           <StatusBadge label={t(`boost.status.${o.status}`)} tone={TONE[o.status] ?? "zinc"} />

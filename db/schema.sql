@@ -730,7 +730,7 @@ $$;
 create table if not exists public.boost_orders (
   id              uuid primary key default gen_random_uuid(),
   buyer_id        uuid not null references public.users(id) on delete restrict,
-  service         text not null check (service in ('winrate','rank','squad')),
+  service         text not null check (service in ('winrate','rank','squad','placement','coaching')),
   config          jsonb not null,
   matches         int not null check (matches > 0),
   amount          bigint not null check (amount > 0),
@@ -818,3 +818,10 @@ create table if not exists public.boost_reviews (
   created_at     timestamptz not null default now()
 );
 create index if not exists idx_boost_reviews_booster on public.boost_reviews (booster_id);
+
+-- boost_orders.service check-ийг шинэ үйлчилгээнд тааруулах (одоо байгаа хүснэгтэд)
+do $$ begin
+  alter table public.boost_orders drop constraint if exists boost_orders_service_check;
+  alter table public.boost_orders add constraint boost_orders_service_check
+    check (service in ('winrate','rank','squad','placement','coaching'));
+exception when others then null; end $$;

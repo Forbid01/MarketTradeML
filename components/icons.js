@@ -210,3 +210,23 @@ export function RefreshCw(p) {
     </Svg>
   );
 }
+
+export function Target(p) {
+  return (
+    <Svg {...p}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
+export function GraduationCap(p) {
+  return (
+    <Svg {...p}>
+      <path d="M21.42 10.42 12 5 2.58 10.42a1 1 0 0 0 0 1.16L12 17l9.42-5.42a1 1 0 0 0 0-1.16z" />
+      <path d="M6 13v4c0 1.1 2.69 2 6 2s6-.9 6-2v-4" />
+      <path d="M21.5 11v4.5" />
+    </Svg>
+  );
+}
