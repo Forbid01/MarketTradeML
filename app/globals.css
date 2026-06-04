@@ -79,32 +79,27 @@ body {
   to   { opacity: 1; transform: none; filter: none; }
 }
 
-/* TransitionFX — дайчны силуэт хуудас солигдоход зүснэ + гэрлийн slash */
+/* TransitionFX — хуудас солигдоход өнгөрөх гэрлэн зураас (light slash sweep) */
 .fx-layer {
   position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden;
   animation: fxFade 0.9s 0.15s forwards;
 }
 @keyframes fxFade { to { opacity: 0; visibility: hidden; } }
 .fx-slash {
-  position: absolute; top: 0; bottom: 0; left: 0; width: 45%;
-  background: linear-gradient(100deg, transparent, rgba(245,196,81,0.5) 45%, rgba(109,93,246,0.55) 60%, transparent);
-  filter: blur(8px);
+  position: absolute; top: 0; bottom: 0; left: 0; width: 38%;
+  background: linear-gradient(100deg,
+    transparent,
+    rgba(109,93,246,0.45) 38%,
+    rgba(255,255,255,0.55) 50%,
+    rgba(56,189,248,0.5) 62%,
+    transparent);
+  filter: blur(9px);
   animation: slashWipe 0.85s cubic-bezier(0.7, 0, 0.3, 1) forwards;
 }
 @keyframes slashWipe {
   0%   { transform: translateX(-130%) skewX(-14deg); opacity: 0; }
   25%  { opacity: 1; }
   60%,100% { transform: translateX(330%) skewX(-14deg); opacity: 0; }
-}
-.fx-hero {
-  position: absolute; top: 50%; left: 0;
-  animation: heroDash 0.8s cubic-bezier(0.6, 0, 0.2, 1) forwards;
-  filter: drop-shadow(0 0 18px rgba(109,93,246,0.6));
-}
-@keyframes heroDash {
-  0%   { transform: translate(-45vw,-50%) scaleX(1.5); opacity: 0; }
-  28%  { opacity: 0.95; }
-  72%,100% { transform: translate(140vw,-50%) scaleX(1.5); opacity: 0; }
 }
 
 /* Scroll reveal — variant-уудтай (data-v) */

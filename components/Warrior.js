@@ -77,21 +77,3 @@ export function Warrior({ size = 320, className = "" }) {
     </svg>
   );
 }
-
-// Хуудас солигдоход зүсэн өнгөрөх компакт силуэт (TransitionFX-д)
-export function WarriorStreak({ size = 120 }) {
-  const w = Math.round(size * (260 / 340));
-  return (
-    <svg viewBox="0 0 260 340" width={w} height={size} aria-hidden="true" fill="none">
-      <path
-        d="M130 36 C116 36 108 47 108 60 C108 70 112 78 118 83 L100 96 78 108 84 132 104 122 104 138
-           C90 150 86 176 90 206 L96 250 88 300 116 300 122 250 124 210 L136 210 138 250 144 300 172 300
-           164 250 170 206 C174 176 170 150 156 138 L156 122 176 132 182 108 160 96 142 83
-           C148 78 152 70 152 60 C152 47 144 36 130 36 Z"
-        fill="#6D5DF6"
-      />
-      <rect x="206" y="150" width="9" height="150" rx="3" fill="#38BDF8" />
-      <path d="M206 150 l4.5 -120 4.5 120 z" fill="#38BDF8" />
-    </svg>
-  );
-}
