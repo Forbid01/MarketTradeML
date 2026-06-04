@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useT } from "@/lib/i18n/client";
+import { useT, useLocale } from "@/lib/i18n/client";
 import { formatMNT } from "@/lib/format";
 import { createBoostOrder } from "@/lib/actions";
 import { BOOST, RANK_LADDER, rankMatches, boostTotal, bulkDiscount } from "@/lib/boost";
@@ -25,6 +25,7 @@ function Toggle({ on, onClick, children }) {
 
 function Card({ icon, title, desc, perMatch, matches, total, service, config, unit, perLabel, children }) {
   const t = useT();
+  const locale = useLocale();
   const countLabel = unit || t("boost.matches");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -50,7 +51,7 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, un
         </div>
         <div className="shrink-0 rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-3 py-1.5 text-right">
           <div className="text-[10px] uppercase tracking-wide text-slate-400">{perLabel || t("boost.perMatch")}</div>
-          <div className="text-sm font-bold text-[#38BDF8]">{formatMNT(perMatch)}</div>
+          <div className="text-sm font-bold text-[#38BDF8]">{formatMNT(perMatch, locale)}</div>
         </div>
       </div>
 
@@ -74,7 +75,7 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, un
             )}
           </div>
           <div className="bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-2xl font-extrabold text-transparent">
-            {formatMNT(total)}
+            {formatMNT(total, locale)}
           </div>
         </div>
         <button

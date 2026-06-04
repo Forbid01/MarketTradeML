@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { listOpenDisputes, listPendingPayouts } from "@/lib/queries";
 import { formatMNT, formatDateTime } from "@/lib/format";
-import { getT } from "@/lib/i18n/server";
+import { getT, getLocale } from "@/lib/i18n/server";
 import { Shield, BadgeCheck } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,7 @@ export default async function AdminPage() {
   const { user, profile } = await getCurrentUser();
   if (!user || !profile) redirect("/login?next=/admin");
   const t = await getT();
+  const locale = await getLocale();
   if (profile?.role !== "admin") {
     return <p className="py-12 text-center text-slate-400">{t("admin.onlyAdmin")}</p>;
   }
@@ -64,7 +65,7 @@ export default async function AdminPage() {
               className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm hover:border-[#6D5DF6]/40"
             >
               <span className="text-slate-50">{o.listing_title ?? "Захиалга"}</span>
-              <span className="text-emerald-300">{formatMNT(o.amount - o.fee)}</span>
+              <span className="text-emerald-300">{formatMNT(o.amount - o.fee, locale)}</span>
             </Link>
           ))
         )}

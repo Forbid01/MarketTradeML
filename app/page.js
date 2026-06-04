@@ -1,23 +1,25 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { isDbConfigured } from "@/lib/db";
-import { getMarketStats } from "@/lib/queries";
-import { getT } from "@/lib/i18n/server";
+import { getMarketStats, getRecentReviews, getRecentSales } from "@/lib/queries";
+import { getT, getLocale } from "@/lib/i18n/server";
 import Hero from "@/components/landing/Hero";
 import Reveal from "@/components/landing/Reveal";
 import Parallax from "@/components/landing/Parallax";
-import Stats from "@/components/landing/Stats";
 import LiveCounters from "@/components/landing/LiveCounters";
 import StepsTimeline from "@/components/landing/StepsTimeline";
 import ScrollProgress from "@/components/landing/ScrollProgress";
 import SectionDots from "@/components/landing/SectionDots";
 import Marquee from "@/components/landing/Marquee";
 import Preloader from "@/components/landing/Preloader";
-import { Shield, BadgeCheck, Lock, ArrowRight } from "@/components/icons";
+import RecentSales from "@/components/landing/RecentSales";
+import Testimonials from "@/components/landing/Testimonials";
+import FAQ from "@/components/landing/FAQ";
+import { Shield, BadgeCheck, Lock, ArrowRight, Logo } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
-const SECTION_IDS = ["hero", "trust", "steps", "stats", "cta"];
+const SECTION_IDS = ["hero", "trust", "steps", "stats", "faq", "cta"];
 
 export default async function Home() {
   const t = await getT();
@@ -25,13 +27,14 @@ export default async function Home() {
   // Preloader-ийг зөвхөн анхны зочлолтод (cookie байхгүй) серверт рендэрлэнэ → first-paint-д бүрхэнэ.
   const introSeen = (await cookies()).get("mlbb_intro")?.value === "1";
 
-  // Live counter-уудад бодит тоо (DB тохируулаагүй/хоосон бол алгасна — худал тоо харуулахгүй).
-  let stats = null;
+  // Live counter / social proof — бодит тоо. DB-гүй/хоосон бол тус бүр алгасна.
+  let stats = null, reviews = [], sales = [];
   if (isDbConfigured) {
     try { stats = await getMarketStats(); } catch {}
+    try { reviews = await getRecentReviews(6); } catch {}
+    try { sales = await getRecentSales(8); } catch {}
   }
-  const showLive = Boolean(stats && (stats.listings > 0 || stats.trades > 0));
-
+  const locale = await getLocale();
   const features = [
     { Icon: Shield, title: t("landing.feat1Title"), body: t("landing.feat1Body"), v: "left" },
     { Icon: BadgeCheck, title: t("landing.feat2Title"), body: t("landing.feat2Body"), v: "up" },
@@ -93,18 +96,32 @@ export default async function Home() {
         <StepsTimeline eyebrow={t("landing.stepsEyebrow")} title={t("landing.stepsTitle")} steps={steps} />
       </section>
 
-      {/* Stats — live counters + qualitative claims */}
+      {/* Stats — нэг хүчтэй тоо баримтын зурвас (бодит тоо эсвэл чанарын баталгаа) */}
       <section id="stats" className="relative px-4 py-20 sm:py-28">
-        <div className="mx-auto max-w-4xl space-y-12">
-          {showLive && (
-            <Reveal variant="up">
-              <LiveCounters stats={stats} />
-            </Reveal>
-          )}
-          <Reveal variant="scale">
-            <Stats />
+        <div className="mx-auto max-w-4xl">
+          <Reveal variant="up">
+            <LiveCounters stats={stats} />
           </Reveal>
         </div>
+      </section>
+
+      {/* Сүүлийн арилжаа (борлуулалт байвал) */}
+      <RecentSales sales={sales} label={t("landing.soldLabel")} locale={locale} />
+
+      {/* Testimonials — бодит сэтгэгдэл байвал */}
+      {reviews.length > 0 && (
+        <section className="relative px-4 py-20 sm:py-28">
+          <Reveal variant="up">
+            <Testimonials reviews={reviews} />
+          </Reveal>
+        </section>
+      )}
+
+      {/* FAQ */}
+      <section id="faq" className="relative px-4 py-20 sm:py-28">
+        <Reveal variant="up">
+          <FAQ />
+        </Reveal>
       </section>
 
       {/* Final CTA */}
@@ -126,8 +143,24 @@ export default async function Home() {
         </Reveal>
       </section>
 
-      <footer className="border-t border-white/5 px-4 py-10">
-        <p className="mx-auto max-w-3xl text-center text-xs leading-relaxed text-slate-500">{t("landing.footNote")}</p>
+      <footer className="border-t border-white/5 px-4 py-12">
+        <div className="mx-auto max-w-5xl">
+          <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="text-center sm:text-left">
+              <Link href="/" className="inline-flex items-center gap-2 font-bold uppercase tracking-wide text-slate-50">
+                <Logo className="text-[#38BDF8]" /> MLBB Market
+              </Link>
+              <p className="mx-auto mt-2 max-w-xs text-xs text-slate-500 sm:mx-0">{t("landing.heroBadge")}</p>
+            </div>
+            <nav className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
+              <Link href="/browse" className="text-slate-400 transition hover:text-slate-50">{t("nav.browse")}</Link>
+              <Link href="/boost" className="text-slate-400 transition hover:text-slate-50">{t("nav.boost")}</Link>
+              <Link href="/listings/new" className="text-slate-400 transition hover:text-slate-50">{t("nav.addListing")}</Link>
+              <Link href="/login" className="text-slate-400 transition hover:text-slate-50">{t("nav.login")}</Link>
+            </nav>
+          </div>
+          <p className="mx-auto mt-8 max-w-3xl text-center text-xs leading-relaxed text-slate-600">{t("landing.footNote")}</p>
+        </div>
       </footer>
     </div>
   );

@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminRecordPayout } from "@/lib/actions";
 import { formatMNT } from "@/lib/format";
-import { useT } from "@/lib/i18n/client";
+import { useT, useLocale } from "@/lib/i18n/client";
 
 // Build Plan 2.6: гар payout бүртгэх (adminRecordPayout server action).
 export default function AdminPayoutForm({ orderId, netAmount }) {
   const router = useRouter();
   const t = useT();
+  const locale = useLocale();
   const [form, setForm] = useState({ method: "bank", bank_account: "", ref: "" });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -34,7 +35,7 @@ export default function AdminPayoutForm({ orderId, netAmount }) {
   return (
     <form onSubmit={submit} className="space-y-2 rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-4">
       <h3 className="text-sm font-semibold text-emerald-300">
-        {t("adminAct.payoutTitle", { amount: formatMNT(netAmount) })}
+        {t("adminAct.payoutTitle", { amount: formatMNT(netAmount, locale) })}
       </h3>
       <input className={field} placeholder={t("adminAct.bankPh")} value={form.bank_account} onChange={(e) => setForm((f) => ({ ...f, bank_account: e.target.value }))} />
       <input className={field} placeholder={t("adminAct.refPh")} value={form.ref} onChange={(e) => setForm((f) => ({ ...f, ref: e.target.value }))} />

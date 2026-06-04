@@ -11,14 +11,14 @@
 
 ## 🛒 Маркетплейс
 - ✅ **Хайлт/шүүлт** — үнийн муж, win-rate, level, "verified only", эрэмбэ, filter chip + skeleton (Phase 2).
-- **Watchlist мэдэгдэл** — хадгалсан зар үнэ буурвал/зарагдвал мэдэгдэх.
+- ✅ **Watchlist мэдэгдэл** — хадгалсан зар зарагдвал/үнэ буурвал мэдэгдэх (DB trigger, Phase 6).
 - **Зар сэргээх (bump)** + онцлох зар (paid promotion) — орлогын суваг.
 - **Олон зураг + видео** listing-д; зар засах UI (одоо устгах/нуух л байгаа).
 
 ## ⚔️ Бустинг (skycoach маягаар тэлэх)
 - **Илүү үйлчилгээ**: Placement/Calibration boost, Coaching (цаг тутам), Achievement boost, Hero mastery.
 - ✅ **Booster хуваарилалт + явцын статус** — booster-д хуваарилах, дууссан match-ийн прогресс bar (Phase 4).
-- **Live явц** — ✅ match прогресс; ⏳ booster↔buyer чат (messages одоо зөвхөн account захиалгад — boost-д өргөтгөх).
+- ✅ **Live явц** — match прогресс + booster↔buyer realtime чат (Phase 4/6).
 - ✅ **Урамшуулал** — олон match дээр bulk discount (10+→5%, 20+→10%, 40+→15%) + promo код.
 
 ## 📈 Өсөлт / орлого
@@ -28,7 +28,7 @@
 
 ## 🛠 Ops / найдвартай байдал
 - **Booster/seller payout dashboard** + автомат тооцоо.
-- **Имэйл мэдэгдэл** (Resend) — захиалгын төлөв, OTP-аас гадна.
+- ✅ **Имэйл мэдэгдэл** (Resend) — escrow milestone (шилжүүлэг/шалгалт/дуусгал/маргаан) + payment + OTP (Phase 6).
 - **Rate-limit бүх mutating action-д** (одоо зөвхөн OTP-д).
 - **Тест** — escrow state machine + price тооцооллын unit test; e2e (Playwright).
 - **Observability** — Sentry/log, QPay reconcile-ийн алерт.

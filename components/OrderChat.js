@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { sendMessage, getOrderMessages } from "@/lib/actions";
+import { sendMessage, getOrderMessages, sendBoostMessage, getBoostMessages } from "@/lib/actions";
 import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { Clock, Check, ArrowRight } from "@/components/icons";
@@ -31,7 +31,7 @@ function lastRealSeq(msgs) {
   return null;
 }
 
-export default function OrderChat({ orderId, myUserId, initialMessages }) {
+export default function OrderChat({ orderId, myUserId, initialMessages, kind = "order" }) {
   const t = useT();
   const [messages, setMessages] = useState(() => (initialMessages ?? []).slice().sort(byOrder));
   const [body, setBody] = useState("");
@@ -81,7 +81,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
     let added = false;
     try {
       const cur = cursorRef.current;
-      const r = await getOrderMessages(orderId, cur != null ? { afterSeq: cur } : undefined);
+      const r = await (kind === "boost" ? getBoostMessages : getOrderMessages)(orderId, cur != null ? { afterSeq: cur } : undefined);
       if (!mountedRef.current) return;
       if (r?.ok) {
         added = (r.messages?.length ?? 0) > 0;
@@ -101,7 +101,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(poll, delay);
     }
-  }, [orderId, applyIncoming]);
+  }, [orderId, applyIncoming, kind]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -158,7 +158,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
     };
     stickRef.current = true;
     setMessages((prev) => [...prev, temp]);
-    const r = await sendMessage(orderId, text);
+    const r = await (kind === "boost" ? sendBoostMessage : sendMessage)(orderId, text);
     if (!mountedRef.current) return;
     if (r?.ok && r.message?.id) {
       const real = r.message;
@@ -173,7 +173,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
     } else {
       setMessages((prev) => prev.map((m) => (m.tempId === tempId ? { ...m, pending: false, failed: true } : m)));
     }
-  }, [orderId, myUserId]);
+  }, [orderId, myUserId, kind]);
 
   function onSubmit(e) {
     e.preventDefault();

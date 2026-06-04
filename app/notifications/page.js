@@ -43,9 +43,10 @@ export default async function NotificationsPage() {
                 <p className="mt-1 text-xs text-slate-500">{formatDateTime(n.created_at)}</p>
               </div>
             );
+            const href = n.order_id ? `/orders/${n.order_id}` : n.boost_order_id ? `/boost/${n.boost_order_id}` : null;
             return (
               <li key={n.id}>
-                {n.order_id ? <Link href={`/orders/${n.order_id}`}>{inner}</Link> : inner}
+                {href ? <Link href={href}>{inner}</Link> : inner}
               </li>
             );
           })}

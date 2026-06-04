@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getListingById, getPublicProfile, getSellerReviews, isFavorited } from "@/lib/queries";
 import { formatMNT, formatDateTime } from "@/lib/format";
 import { PLATFORM_FEE_RATE } from "@/lib/constants";
-import { getT } from "@/lib/i18n/server";
+import { getT, getLocale } from "@/lib/i18n/server";
 import BuyButton from "@/components/BuyButton";
 import OwnerControls from "@/components/OwnerControls";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -20,8 +20,9 @@ export async function generateMetadata({ params }) {
   try {
     const l = await getListingById(id);
     if (!l) return { title: "MLBB Market" };
+    const locale = await getLocale();
     const title = `${l.title} · ${l.rank} — MLBB Market`;
-    const description = (l.description?.slice(0, 160)) || `${l.rank} · ${l.server} · ${formatMNT(l.price)}`;
+    const description = (l.description?.slice(0, 160)) || `${l.rank} · ${l.server} · ${formatMNT(l.price, locale)}`;
     const img = l.images?.[0]?.url;
     return {
       title,
@@ -38,6 +39,7 @@ export default async function ListingDetail({ params }) {
   if (!isDbConfigured) redirect("/");
   const { id } = await params;
   const t = await getT();
+  const locale = await getLocale();
 
   const listing = await getListingById(id);
   if (!listing) notFound();
@@ -147,8 +149,8 @@ export default async function ListingDetail({ params }) {
         {/* Үнэ + үйлдэл */}
         <aside className="space-y-3">
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-            <p className="text-2xl font-bold text-[#38BDF8]">{formatMNT(listing.price)}</p>
-            <p className="mt-1 text-xs text-slate-500">{t("listing.feeNote", { fee: formatMNT(fee) })}</p>
+            <p className="text-2xl font-bold text-[#38BDF8]">{formatMNT(listing.price, locale)}</p>
+            <p className="mt-1 text-xs text-slate-500">{t("listing.feeNote", { fee: formatMNT(fee, locale) })}</p>
 
             <div className="mt-3 border-t border-white/10 pt-3">
               {isOwner ? (

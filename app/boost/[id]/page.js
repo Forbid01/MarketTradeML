@@ -1,13 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { getBoostOrder, getBoostReview } from "@/lib/queries";
+import { getBoostOrder, getBoostReview, getBoostChat } from "@/lib/queries";
 import { formatMNT, formatDateTime } from "@/lib/format";
 import { getT, getLocale } from "@/lib/i18n/server";
 import StatusBadge from "@/components/StatusBadge";
 import BoostPay from "@/components/boost/BoostPay";
 import BoostAdmin from "@/components/boost/BoostAdmin";
 import BoostReviewForm from "@/components/boost/BoostReviewForm";
+import OrderChat from "@/components/OrderChat";
 import { Star } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,9 @@ export default async function BoostOrderPage({ params }) {
   const t = await getT();
   const locale = await getLocale();
   const review = o.status === "completed" ? await getBoostReview(o.id) : null;
+  const isParty = isAdmin || o.buyer_id === profile.id || o.booster_id === profile.id;
+  const chatOn = isParty && ["paid", "in_progress", "completed"].includes(o.status);
+  const messages = chatOn ? await getBoostChat(o.id, profile.id, isAdmin) : [];
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
@@ -125,6 +129,8 @@ export default async function BoostOrderPage({ params }) {
           <BoostReviewForm boostId={o.id} />
         )
       )}
+
+      {chatOn && <OrderChat kind="boost" orderId={o.id} myUserId={profile.id} initialMessages={messages ?? []} />}
     </div>
   );
 }

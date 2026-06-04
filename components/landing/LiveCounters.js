@@ -1,47 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
 import { useT, useLocale } from "@/lib/i18n/client";
-import { useReducedMotion } from "@/lib/hooks";
+import { useReducedMotion, useCountUp } from "@/lib/hooks";
 import { formatMNT } from "@/lib/format";
 
-// Бодит DB тоог viewport-д орохд count-up хийнэ. reduced-motion үед шууд эцсийн утга.
-function Counter({ value, label, kind, locale, reduce }) {
-  const [animated, setAnimated] = useState(0);
-  const ref = useRef(null);
+// "100%" / "48ц" / "$0" зэрэг чанарын утгыг {prefix, value, suffix} болгон задална.
+function parseStat(s) {
+  const m = String(s).match(/^(\D*)(\d[\d,.]*)(.*)$/);
+  if (!m) return { prefix: "", value: 0, suffix: String(s ?? "") };
+  return { prefix: m[1], value: parseFloat(m[2].replace(/,/g, "")) || 0, suffix: m[3] };
+}
 
-  useEffect(() => {
-    if (reduce) return; // reduced-motion: анимэйшнгүй, доор value-г шууд харуулна
-    const el = ref.current;
-    if (!el) return;
-    let raf = 0;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            const dur = 1400, start = performance.now();
-            const tick = (now) => {
-              const p = Math.min(1, (now - start) / dur);
-              const eased = 1 - Math.pow(1 - p, 3); // ease-out
-              setAnimated(Math.round(value * eased));
-              if (p < 1) raf = requestAnimationFrame(tick);
-              else setAnimated(value);
-            };
-            raf = requestAnimationFrame(tick);
-            io.unobserve(el);
-          }
-        }
-      },
-      { threshold: 0.4 }
-    );
-    io.observe(el);
-    return () => { io.disconnect(); if (raf) cancelAnimationFrame(raf); };
-  }, [value, reduce]);
-
-  const shown = reduce ? value : animated;
-  const display = kind === "mnt"
-    ? formatMNT(shown, locale)
-    : new Intl.NumberFormat(locale === "en" ? "en-US" : "mn-MN").format(shown);
+// Тоог viewport-д орохд count-up хийнэ. reduced-motion үед шууд эцсийн утга.
+function Counter({ value, label, format, prefix = "", suffix = "", locale, reduce }) {
+  const [ref, animated] = useCountUp(value, { reduce });
+  const shown = Math.round(animated);
+  const display =
+    format === "mnt" ? formatMNT(shown, locale)
+    : format === "int" ? new Intl.NumberFormat(locale === "en" ? "en-US" : "mn-MN").format(shown)
+    : `${prefix}${shown}${suffix}`;
 
   return (
     <div ref={ref} className="text-center">
@@ -51,24 +28,35 @@ function Counter({ value, label, kind, locale, reduce }) {
   );
 }
 
+// Нэг хүчтэй "тоо баримт" зурвас: бодит тоо (>0) бол түүнийг, эс бөгөөс чанарын баталгааг
+// (100% escrow, 48ц шалгалт, 0₮ шимтгэл) харуулна — шинэ маркетплейс ч хоосон/тэг харагдахгүй.
 export default function LiveCounters({ stats }) {
   const t = useT();
   const locale = useLocale();
   const reduce = useReducedMotion();
-  if (!stats) return null;
+  const s = stats ?? { listings: 0, trades: 0, protected: 0 };
 
-  const items = [
-    { value: stats.listings, label: t("landing.live.listings"), kind: "int" },
-    { value: stats.trades, label: t("landing.live.trades"), kind: "int" },
-    { value: stats.protected, label: t("landing.live.protected"), kind: "mnt" },
+  const q1 = parseStat(t("landing.stat1Num"));
+  const q2 = parseStat(t("landing.stat2Num"));
+  const q3 = parseStat(t("landing.stat3Num"));
+  const cells = [
+    s.listings > 0
+      ? { value: s.listings, label: t("landing.live.listings"), format: "int" }
+      : { value: q1.value, prefix: q1.prefix, suffix: q1.suffix, label: t("landing.stat1Label"), format: "raw" },
+    s.trades > 0
+      ? { value: s.trades, label: t("landing.live.trades"), format: "int" }
+      : { value: q2.value, prefix: q2.prefix, suffix: q2.suffix, label: t("landing.stat2Label"), format: "raw" },
+    s.protected > 0
+      ? { value: s.protected, label: t("landing.live.protected"), format: "mnt" }
+      : { value: q3.value, prefix: q3.prefix, suffix: q3.suffix, label: t("landing.stat3Label"), format: "raw" },
   ];
 
   return (
     <div>
       <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[#38BDF8]">{t("landing.live.eyebrow")}</p>
       <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:gap-4 sm:p-8">
-        {items.map((it, i) => (
-          <Counter key={i} value={it.value} label={it.label} kind={it.kind} locale={locale} reduce={reduce} />
+        {cells.map((c, i) => (
+          <Counter key={i} value={c.value} label={c.label} format={c.format} prefix={c.prefix} suffix={c.suffix} locale={locale} reduce={reduce} />
         ))}
       </div>
     </div>

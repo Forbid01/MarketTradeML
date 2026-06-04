@@ -450,12 +450,19 @@ exception when duplicate_object then null; end $$;
 
 create or replace function public.notify_new_message()
 returns trigger language plpgsql as $$
-declare o public.orders; recipient uuid;
+declare recipient uuid;
 begin
-  select * into o from public.orders where id = new.order_id;
-  recipient := case when new.sender_id = o.buyer_id then o.seller_id else o.buyer_id end;
-  insert into public.notifications(user_id, type, title, body, order_id, channel)
-  values (recipient, 'message', 'Шинэ мессеж', left(new.body, 80), new.order_id, 'in_app');
+  if new.order_id is not null then
+    select case when new.sender_id = o.buyer_id then o.seller_id else o.buyer_id end
+      into recipient from public.orders o where o.id = new.order_id;
+  elsif new.boost_order_id is not null then
+    select case when new.sender_id = bo.buyer_id then bo.booster_id else bo.buyer_id end
+      into recipient from public.boost_orders bo where bo.id = new.boost_order_id;
+  end if;
+  if recipient is not null then
+    insert into public.notifications(user_id, type, title, body, order_id, boost_order_id, channel)
+    values (recipient, 'message', 'Шинэ мессеж', left(new.body, 80), new.order_id, new.boost_order_id, 'in_app');
+  end if;
   return null;
 end;
 $$;
@@ -471,6 +478,7 @@ returns boolean language sql stable as $$
     select tc.primary_email_ownership_transferred and tc.email_password_changed_by_buyer
        and tc.recovery_phone_changed_by_buyer and tc.secondary_verification_email_transferred
        and tc.two_fa_reset_done and tc.verified_by_buyer
+       and tc.facebook_unbound and tc.google_unbound and tc.tiktok_unbound
        and tc.seller_link_cut and tc.seller_signed_release and tc.original_topup_receipts_handed_over
     from public.transfer_checklist tc where tc.order_id = p_order_id
   ), false);
@@ -795,6 +803,18 @@ begin
 end;
 $$;
 
+-- Boost чат: messages-г boost_orders-д ч холбоно (order_id ЭСВЭЛ boost_order_id, аль нэг нь).
+alter table public.messages alter column order_id drop not null;
+alter table public.messages add column if not exists boost_order_id uuid references public.boost_orders(id) on delete cascade;
+do $$ begin
+  alter table public.messages add constraint messages_one_parent
+    check ((order_id is not null) <> (boost_order_id is not null));
+exception when duplicate_object then null; end $$;
+create index if not exists idx_messages_boost_seq on public.messages (boost_order_id, seq);
+
+-- Мэдэгдлийг boost захиалгад ч холбоно (boost чатын мэдэгдэл /boost/[id] руу заана)
+alter table public.notifications add column if not exists boost_order_id uuid references public.boost_orders(id) on delete cascade;
+
 -- ═══════════════════════ Rate limiting (mutating action-ууд) ═══════════════════════
 create table if not exists public.rate_events (
   id         bigserial primary key,
@@ -830,6 +850,24 @@ do $$ begin
   create trigger trg_notify_fav_sold after update on public.listings
     for each row when (old.status is distinct from new.status)
     execute function public.notify_favorites_sold();
+exception when duplicate_object then null; end $$;
+
+-- Watchlist: хадгалсан зарын үнэ буурвал мэдэгдэх
+create or replace function public.notify_favorites_price_drop()
+returns trigger language plpgsql as $$
+begin
+  if new.price < old.price and new.status = 'active' and new.deleted_at is null then
+    insert into public.notifications (user_id, type, title, body)
+    select f.user_id, 'price_drop', 'Хадгалсан зарын үнэ буурлаа', new.title
+    from public.favorites f where f.listing_id = new.id;
+  end if;
+  return null;
+end;
+$$;
+do $$ begin
+  create trigger trg_notify_fav_price_drop after update on public.listings
+    for each row when (new.price < old.price)
+    execute function public.notify_favorites_price_drop();
 exception when duplicate_object then null; end $$;
 
 -- Демо промо код (хүсвэл өөрчилнө)
