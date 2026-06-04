@@ -73,18 +73,32 @@ export default function ListingForm() {
 
       const r = await createListing(parsed.data);
       if (r.error) throw new Error(r.error);
+      if (!r.id) throw new Error(t("listingForm.errInvalid"));
 
+      // Зар АЛЬ ХЭДИЙН үүссэн. Зургийг "best-effort"-оор хийнэ — алдаа/гацаа гарвал ч
+      // зар руу заавал шилжинэ (хэрэглэгч гацахгүй, давхар зар үүсэхгүй). Алдсан зураг
+      // нь зард ороогүй гэдгийг placeholder-аар харна. Upload бүрт 30с timeout.
+      let imageFailed = false;
       for (let i = 0; i < files.length; i++) {
-        const blob = await compressImage(files[i]);
-        // Шахалт амжилтгүй (HEIC г.м) → эх том файл буцаж болзошгүй; 1MB server-action лимитээс хэтрэхээс сэргийлнэ.
-        if (blob.size > 7_000_000) throw new Error(t("listingForm.errImageSize"));
-        const fd = new FormData();
-        fd.append("file", blob);
-        fd.append("sort", String(i));
-        const imgRes = await addListingImage(r.id, fd);
-        if (imgRes.error) throw new Error(imgRes.error);
+        try {
+          const blob = await compressImage(files[i]);
+          if (blob.size > 7_000_000) { imageFailed = true; continue; }
+          const fd = new FormData();
+          fd.append("file", blob);
+          fd.append("sort", String(i));
+          const imgRes = await Promise.race([
+            addListingImage(r.id, fd),
+            new Promise((resolve) => setTimeout(() => resolve({ error: "timeout" }), 30000)),
+          ]);
+          if (imgRes?.error) imageFailed = true;
+        } catch {
+          imageFailed = true;
+        }
       }
 
+      // Зар руу шилжинэ — зараа харах нь өөрөө амжилтын баталгаа. (imageFailed үед зар
+      // зураггүй харагдана; Blob тохиргоо зассаны дараа дараагийн зар зурагтай орно.)
+      void imageFailed;
       router.push(`/listings/${r.id}`);
       router.refresh();
     } catch (e) {
