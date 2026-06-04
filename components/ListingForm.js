@@ -2,33 +2,41 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createListing, addListingImage } from "@/lib/actions";
+import { createListing, editListing, addListingImage, deleteListingImage } from "@/lib/actions";
 import { RANKS, SERVERS } from "@/lib/constants";
 import { listingSchema } from "@/lib/validation";
 import { compressImage } from "@/lib/image";
 import { useT } from "@/lib/i18n/client";
 import { ImageIcon } from "@/components/icons";
 
-export default function ListingForm() {
+export default function ListingForm({ listing = null, images = [] }) {
   const router = useRouter();
   const t = useT();
+  const editing = Boolean(listing);
 
   const [form, setForm] = useState({
-    title: "",
-    price: "",
-    server: SERVERS[0],
-    rank: RANKS[6], // Mythic
-    description: "",
-    level: "",
-    heroes_count: "",
-    skins_count: "",
-    win_rate: "",
+    title: listing?.title ?? "",
+    price: listing?.price != null ? String(listing.price) : "",
+    server: listing?.server ?? SERVERS[0],
+    rank: listing?.rank ?? RANKS[6], // Mythic
+    description: listing?.description ?? "",
+    level: listing?.level != null ? String(listing.level) : "",
+    heroes_count: listing?.heroes_count != null ? String(listing.heroes_count) : "",
+    skins_count: listing?.skins_count != null ? String(listing.skins_count) : "",
+    win_rate: listing?.win_rate != null ? String(listing.win_rate) : "",
   });
   const [files, setFiles] = useState([]);
+  const [imgs, setImgs] = useState(images);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function removeImg(id) {
+    const r = await deleteListingImage(id);
+    if (r.ok) setImgs((a) => a.filter((x) => x.id !== id));
+    else setErr(r.error);
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -71,35 +79,35 @@ export default function ListingForm() {
         );
       }
 
-      const r = await createListing(parsed.data);
-      if (r.error) throw new Error(r.error);
-      if (!r.id) throw new Error(t("listingForm.errInvalid"));
+      let targetId;
+      if (editing) {
+        const r = await editListing(listing.id, parsed.data);
+        if (r.error) throw new Error(r.error);
+        targetId = listing.id;
+      } else {
+        const r = await createListing(parsed.data);
+        if (r.error) throw new Error(r.error);
+        if (!r.id) throw new Error(t("listingForm.errInvalid"));
+        targetId = r.id;
+      }
 
-      // Зар АЛЬ ХЭДИЙН үүссэн. Зургийг "best-effort"-оор хийнэ — алдаа/гацаа гарвал ч
-      // зар руу заавал шилжинэ (хэрэглэгч гацахгүй, давхар зар үүсэхгүй). Алдсан зураг
-      // нь зард ороогүй гэдгийг placeholder-аар харна. Upload бүрт 30с timeout.
-      let imageFailed = false;
+      // Шинэ зургийг best-effort upload (30с timeout). Алдаа гарсан ч зар руу шилжинэ.
+      const base = imgs?.length ?? 0;
       for (let i = 0; i < files.length; i++) {
         try {
           const blob = await compressImage(files[i]);
-          if (blob.size > 7_000_000) { imageFailed = true; continue; }
+          if (blob.size > 7_000_000) continue;
           const fd = new FormData();
           fd.append("file", blob);
-          fd.append("sort", String(i));
-          const imgRes = await Promise.race([
-            addListingImage(r.id, fd),
+          fd.append("sort", String(base + i));
+          await Promise.race([
+            addListingImage(targetId, fd),
             new Promise((resolve) => setTimeout(() => resolve({ error: "timeout" }), 30000)),
           ]);
-          if (imgRes?.error) imageFailed = true;
-        } catch {
-          imageFailed = true;
-        }
+        } catch {}
       }
 
-      // Зар руу шилжинэ — зараа харах нь өөрөө амжилтын баталгаа. (imageFailed үед зар
-      // зураггүй харагдана; Blob тохиргоо зассаны дараа дараагийн зар зурагтай орно.)
-      void imageFailed;
-      router.push(`/listings/${r.id}`);
+      router.push(`/listings/${targetId}`);
       router.refresh();
     } catch (e) {
       setErr(e.message ?? String(e));
@@ -182,6 +190,25 @@ export default function ListingForm() {
         </div>
       </details>
 
+      {editing && imgs.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {imgs.map((im) => (
+            <div key={im.id} className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={im.url} alt="" className="h-16 w-24 rounded-lg border border-white/10 object-cover" />
+              <button
+                type="button"
+                onClick={() => removeImg(im.id)}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500/90 text-xs text-white"
+                aria-label={t("listingForm.deleteImage")}
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div>
         <label className="mb-1 flex items-center gap-1.5 text-sm text-slate-200">
           <ImageIcon size={16} className="text-slate-400" /> {t("listingForm.images")}
@@ -204,7 +231,7 @@ export default function ListingForm() {
         disabled={busy}
         className="w-full rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
-        {busy ? t("listingForm.submitting") : t("listingForm.submit")}
+        {busy ? t("listingForm.submitting") : editing ? t("listingForm.save") : t("listingForm.submit")}
       </button>
     </form>
   );

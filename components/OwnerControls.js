@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setListingStatus, softDeleteListing } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
-import { BadgeCheck } from "@/components/icons";
+import { BadgeCheck, Wrench } from "@/components/icons";
 
 export default function OwnerControls({ listingId, status }) {
   const router = useRouter();
@@ -49,6 +50,12 @@ export default function OwnerControls({ listingId, status }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2">
+        <Link
+          href={`/listings/${listingId}/edit`}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-200 hover:bg-white/10"
+        >
+          <Wrench size={15} /> {t("owner.edit")}
+        </Link>
         {status === "active" ? (
           <button
             onClick={() => setStatus("hidden")}
