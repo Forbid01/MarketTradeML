@@ -15,11 +15,11 @@ export default function Error({ error, reset }) {
 
   return (
     <div className="mx-auto max-w-md py-16 text-center">
-      <h2 className="text-lg font-semibold text-slate-900">{t("errorPage.title")}</h2>
-      <p className="mt-2 text-sm text-slate-500">{t("errorPage.body")}</p>
+      <h2 className="text-lg font-semibold text-slate-50">{t("errorPage.title")}</h2>
+      <p className="mt-2 text-sm text-slate-400">{t("errorPage.body")}</p>
       <button
         onClick={() => reset()}
-        className="mt-5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        className="mt-5 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
       >
         {t("errorPage.retry")}
       </button>

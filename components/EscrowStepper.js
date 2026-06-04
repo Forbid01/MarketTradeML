@@ -21,16 +21,16 @@ export default async function EscrowStepper({ status }) {
             <span
               className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
                 active
-                  ? "bg-blue-600 text-white ring-2 ring-blue-200"
+                  ? "bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white ring-2 ring-[#38BDF8]/30"
                   : done
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-100 text-slate-400"
+                    ? "bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white"
+                    : "border border-white/15 text-slate-500"
               }`}
             >
               {done ? <Check size={14} /> : i + 1}
             </span>
-            <span className={active ? "text-blue-600" : "text-slate-500"}>{t(`stepper.${key}`)}</span>
-            {i < STEP_KEYS.length - 1 && <ArrowRight size={14} className="mx-1 text-slate-400" />}
+            <span className={active ? "text-[#38BDF8]" : "text-slate-500"}>{t(`stepper.${key}`)}</span>
+            {i < STEP_KEYS.length - 1 && <ArrowRight size={14} className="mx-1 text-slate-500" />}
           </li>
         );
       })}

@@ -12,7 +12,7 @@ export default async function NewListingPage() {
 
   return (
     <div className="mx-auto max-w-lg space-y-5">
-      <h1 className="text-xl font-bold text-slate-900">{t("listingForm.pageTitle")}</h1>
+      <h1 className="text-xl font-bold text-slate-50">{t("listingForm.pageTitle")}</h1>
       <ListingForm />
     </div>
   );

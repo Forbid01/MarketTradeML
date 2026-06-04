@@ -107,12 +107,12 @@ export default function ListingForm() {
     }
   }
 
-  const field = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+  const field = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]";
 
   return (
     <form onSubmit={submit} className="space-y-4">
       <div>
-        <label className="mb-1 block text-sm text-slate-700">{t("listingForm.title")}</label>
+        <label className="mb-1 block text-sm text-slate-200">{t("listingForm.title")}</label>
         <input
           className={field}
           required
@@ -124,7 +124,7 @@ export default function ListingForm() {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-sm text-slate-700">{t("listingForm.price")}</label>
+          <label className="mb-1 block text-sm text-slate-200">{t("listingForm.price")}</label>
           <input
             className={field}
             required
@@ -135,7 +135,7 @@ export default function ListingForm() {
           />
         </div>
         <div>
-          <label className="mb-1 block text-sm text-slate-700">{t("listingForm.server")}</label>
+          <label className="mb-1 block text-sm text-slate-200">{t("listingForm.server")}</label>
           <select className={field} value={form.server} onChange={(e) => update("server", e.target.value)}>
             {SERVERS.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -143,14 +143,14 @@ export default function ListingForm() {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-slate-700">{t("listingForm.rank")}</label>
+        <label className="mb-1 block text-sm text-slate-200">{t("listingForm.rank")}</label>
         <select className={field} value={form.rank} onChange={(e) => update("rank", e.target.value)}>
           {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
         </select>
       </div>
 
       <div>
-        <label className="mb-1 block text-sm text-slate-700">{t("listingForm.description")}</label>
+        <label className="mb-1 block text-sm text-slate-200">{t("listingForm.description")}</label>
         <textarea
           className={field}
           rows={4}
@@ -160,49 +160,49 @@ export default function ListingForm() {
         />
       </div>
 
-      <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-        <summary className="cursor-pointer text-sm text-slate-700">{t("listingForm.more")}</summary>
+      <details className="rounded-lg border border-white/10 bg-white/[0.03] p-3">
+        <summary className="cursor-pointer text-sm text-slate-200">{t("listingForm.more")}</summary>
         <div className="mt-3 grid grid-cols-2 gap-3">
           <div>
-            <label className="mb-1 block text-xs text-slate-500">{t("listingForm.level")}</label>
+            <label className="mb-1 block text-xs text-slate-400">{t("listingForm.level")}</label>
             <input className={field} inputMode="numeric" value={form.level} onChange={(e) => update("level", e.target.value.replace(/[^0-9]/g, ""))} placeholder="70" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-500">{t("listingForm.heroes")}</label>
+            <label className="mb-1 block text-xs text-slate-400">{t("listingForm.heroes")}</label>
             <input className={field} inputMode="numeric" value={form.heroes_count} onChange={(e) => update("heroes_count", e.target.value.replace(/[^0-9]/g, ""))} placeholder="50" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-500">{t("listingForm.skins")}</label>
+            <label className="mb-1 block text-xs text-slate-400">{t("listingForm.skins")}</label>
             <input className={field} inputMode="numeric" value={form.skins_count} onChange={(e) => update("skins_count", e.target.value.replace(/[^0-9]/g, ""))} placeholder="30" />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-slate-500">{t("listingForm.winRate")}</label>
+            <label className="mb-1 block text-xs text-slate-400">{t("listingForm.winRate")}</label>
             <input className={field} inputMode="decimal" value={form.win_rate} onChange={(e) => update("win_rate", e.target.value.replace(/[^0-9.]/g, ""))} placeholder="55.5" />
           </div>
         </div>
       </details>
 
       <div>
-        <label className="mb-1 flex items-center gap-1.5 text-sm text-slate-700">
-          <ImageIcon size={16} className="text-slate-500" /> {t("listingForm.images")}
+        <label className="mb-1 flex items-center gap-1.5 text-sm text-slate-200">
+          <ImageIcon size={16} className="text-slate-400" /> {t("listingForm.images")}
         </label>
         <input
           type="file"
           accept="image/*"
           multiple
           onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-          className="block w-full text-sm text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white"
+          className="block w-full text-sm text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-gradient-to-r file:from-[#6D5DF6] file:to-[#38BDF8] file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white"
         />
         {files.length > 0 && (
-          <p className="mt-1 text-xs text-slate-400">{t("listingForm.imagesSelected", { n: files.length })}</p>
+          <p className="mt-1 text-xs text-slate-500">{t("listingForm.imagesSelected", { n: files.length })}</p>
         )}
       </div>
 
-      {err && <p className="rounded-lg border border-red-200 bg-red-50 p-2 text-sm text-red-700">{err}</p>}
+      {err && <p className="rounded-lg border border-red-500/30 bg-red-500/15 p-2 text-sm text-red-300">{err}</p>}
 
       <button
         disabled={busy}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="w-full rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {busy ? t("listingForm.submitting") : t("listingForm.submit")}
       </button>

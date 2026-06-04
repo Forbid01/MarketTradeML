@@ -61,14 +61,14 @@ function LoginForm() {
   return (
     <div className="mx-auto max-w-sm space-y-6 py-8">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">{t("login.title")}</h1>
-        <p className="mt-1 text-sm text-slate-500">{t("login.subtitle")}</p>
+        <h1 className="text-xl font-bold text-slate-50">{t("login.title")}</h1>
+        <p className="mt-1 text-sm text-slate-400">{t("login.subtitle")}</p>
       </div>
 
       <button
         onClick={signInGoogle}
         disabled={busy}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-sm hover:border-blue-400 hover:shadow-md disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-slate-50 hover:border-[#6D5DF6]/40 disabled:opacity-50"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
           <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -79,13 +79,13 @@ function LoginForm() {
         {t("login.google")}
       </button>
 
-      <div className="flex items-center gap-3 text-xs text-slate-400">
-        <span className="h-px flex-1 bg-slate-200" /> {t("login.or")} <span className="h-px flex-1 bg-slate-200" />
+      <div className="flex items-center gap-3 text-xs text-slate-500">
+        <span className="h-px flex-1 bg-white/10" /> {t("login.or")} <span className="h-px flex-1 bg-white/10" />
       </div>
 
       {!otpSent ? (
         <form onSubmit={sendOtp} className="space-y-3">
-          <label className="block text-sm text-slate-600">{t("login.email")}</label>
+          <label className="block text-sm text-slate-300">{t("login.email")}</label>
           <input
             type="email"
             required
@@ -93,11 +93,11 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@gmail.com"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
           />
           <button
             disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
           >
             <Mail size={16} />
             {t("login.getCode")}
@@ -105,18 +105,18 @@ function LoginForm() {
         </form>
       ) : (
         <form onSubmit={verifyOtp} className="space-y-3">
-          <label className="block text-sm text-slate-600">{t("login.code")}</label>
+          <label className="block text-sm text-slate-300">{t("login.code")}</label>
           <input
             inputMode="numeric"
             required
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             placeholder="000000"
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-center text-lg tracking-widest text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-center text-lg tracking-widest text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
           />
           <button
             disabled={busy}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2.5 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
           >
             <Lock size={16} />
             {t("login.verify")}
@@ -124,7 +124,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => setOtpSent(false)}
-            className="flex w-full items-center justify-center gap-1 text-xs text-slate-400 hover:text-slate-900"
+            className="flex w-full items-center justify-center gap-1 text-xs text-slate-500 hover:text-slate-50"
           >
             <ArrowRight size={14} />
             {t("login.changeEmail")}
@@ -132,7 +132,7 @@ function LoginForm() {
         </form>
       )}
 
-      {msg && <p className="text-center text-sm text-amber-600">{msg}</p>}
+      {msg && <p className="text-center text-sm text-[#F5C451]">{msg}</p>}
     </div>
   );
 }

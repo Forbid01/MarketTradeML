@@ -29,16 +29,16 @@ export default function AdminPayoutForm({ orderId, netAmount }) {
     else router.refresh();
   }
 
-  const field = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500";
+  const field = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 placeholder:text-slate-500 outline-none focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]";
 
   return (
-    <form onSubmit={submit} className="space-y-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-      <h3 className="text-sm font-semibold text-emerald-700">
+    <form onSubmit={submit} className="space-y-2 rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-4">
+      <h3 className="text-sm font-semibold text-emerald-300">
         {t("adminAct.payoutTitle", { amount: formatMNT(netAmount) })}
       </h3>
       <input className={field} placeholder={t("adminAct.bankPh")} value={form.bank_account} onChange={(e) => setForm((f) => ({ ...f, bank_account: e.target.value }))} />
       <input className={field} placeholder={t("adminAct.refPh")} value={form.ref} onChange={(e) => setForm((f) => ({ ...f, ref: e.target.value }))} />
-      {err && <p className="text-sm text-red-700">{err}</p>}
+      {err && <p className="text-sm text-red-300">{err}</p>}
       <button disabled={busy} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50">
         {t("adminAct.recordPayout")}
       </button>

@@ -53,8 +53,8 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
   }
 
   return (
-    <section className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-sm">
-      <h3 className="border-b border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600">{t("chat.title")}</h3>
+    <section className="flex flex-col rounded-xl border border-white/10 bg-white/[0.03]">
+      <h3 className="border-b border-white/10 px-4 py-2 text-sm font-semibold text-slate-300">{t("chat.title")}</h3>
 
       <div className="flex max-h-80 min-h-[8rem] flex-col gap-2 overflow-y-auto p-3">
         {messages.length === 0 ? (
@@ -66,7 +66,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
               <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[75%] rounded-2xl px-3 py-1.5 text-sm ${
-                    mine ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-900"
+                    mine ? "bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white" : "bg-white/10 text-slate-100"
                   }`}
                 >
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
@@ -81,16 +81,16 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
         <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={send} className="flex gap-2 border-t border-slate-200 p-2">
+      <form onSubmit={send} className="flex gap-2 border-t border-white/10 p-2">
         <input
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder={t("chat.placeholder")}
-          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
         />
         <button
           disabled={busy}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
         >
           {t("chat.send")}
         </button>

@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #06070E;
+  --foreground: #E8ECF8;
+  /* Mythic палитр (өөрийн брэнд — Moonton art БИШ) */
+  --gold: #F5C451;
+  --violet: #6D5DF6;
+  --azure: #38BDF8;
 }
 
 @theme inline {
@@ -12,61 +16,121 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Light theme app-wide — keep white even when OS is in dark mode. */
+/* Dark cinematic — OS theme-ээс үл хамаарч бараан. Premium гүн (radial glow). */
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1100px 560px at 50% -12%, rgba(109, 93, 246, 0.16), transparent 60%),
+    radial-gradient(820px 460px at 100% 4%, rgba(245, 196, 81, 0.07), transparent 55%),
+    radial-gradient(700px 500px at 0% 30%, rgba(56, 189, 248, 0.06), transparent 55%),
+    var(--background);
   color: var(--foreground);
+  min-height: 100vh;
 }
 
-/* ─────────────────────────── Landing motion ─────────────────────────── */
-@keyframes floaty {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
+/* ─────────────────────────── Motion keyframes ─────────────────────────── */
+@keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
 @keyframes spinSlow { to { transform: rotate(360deg); } }
 @keyframes auroraDrift {
-  0%   { transform: translate(0, 0) scale(1); }
-  33%  { transform: translate(36px, -28px) scale(1.12); }
-  66%  { transform: translate(-30px, 24px) scale(0.95); }
-  100% { transform: translate(0, 0) scale(1); }
+  0%   { transform: translate(0,0) scale(1); }
+  33%  { transform: translate(38px,-30px) scale(1.14); }
+  66%  { transform: translate(-32px,26px) scale(0.94); }
+  100% { transform: translate(0,0) scale(1); }
 }
 @keyframes shine {
-  0%   { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
-  18%  { opacity: 0.55; }
-  45%, 100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
+  0% { transform: translateX(-160%) skewX(-18deg); opacity: 0; }
+  18% { opacity: 0.55; }
+  45%,100% { transform: translateX(260%) skewX(-18deg); opacity: 0; }
 }
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 196, 81, 0.45); }
-  50% { box-shadow: 0 0 22px 4px rgba(245, 196, 81, 0.15); }
+  0%,100% { box-shadow: 0 0 0 0 rgba(245,196,81,0.45); }
+  50% { box-shadow: 0 0 26px 6px rgba(245,196,81,0.14); }
+}
+@keyframes heroFloat {
+  0%,100% { transform: translateY(0) rotate(-0.5deg); }
+  50% { transform: translateY(-14px) rotate(0.5deg); }
+}
+@keyframes heroAura {
+  0%,100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+@keyframes emberRise {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  12% { opacity: 0.85; }
+  100% { transform: translateY(-140px) scale(0.35); opacity: 0; }
+}
+@keyframes drawStroke { to { stroke-dashoffset: 0; } }
+@keyframes sheen {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-/* Scroll reveal (toggled by Reveal.js via IntersectionObserver) */
+/* ─────────────────────────── Page transition ─────────────────────────── */
+/* template.js нь навигаци бүрт remount хийдэг тул энэ нэг удаагийн animation дахин тоглоно. */
+.page-enter {
+  animation: pageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(16px) scale(0.994); filter: blur(7px); }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+
+/* TransitionFX — дайчны силуэт хуудас солигдоход зүснэ + гэрлийн slash */
+.fx-layer {
+  position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden;
+  animation: fxFade 0.9s 0.15s forwards;
+}
+@keyframes fxFade { to { opacity: 0; visibility: hidden; } }
+.fx-slash {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(245,196,81,0.5) 45%, rgba(109,93,246,0.55) 60%, transparent);
+  filter: blur(8px);
+  animation: slashWipe 0.85s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+}
+@keyframes slashWipe {
+  0%   { transform: translateX(-130%) skewX(-14deg); opacity: 0; }
+  25%  { opacity: 1; }
+  60%,100% { transform: translateX(330%) skewX(-14deg); opacity: 0; }
+}
+.fx-hero {
+  position: absolute; top: 50%; left: 0;
+  animation: heroDash 0.8s cubic-bezier(0.6, 0, 0.2, 1) forwards;
+  filter: drop-shadow(0 0 18px rgba(109,93,246,0.6));
+}
+@keyframes heroDash {
+  0%   { transform: translate(-45vw,-50%) scaleX(1.5); opacity: 0; }
+  28%  { opacity: 0.95; }
+  72%,100% { transform: translate(140vw,-50%) scaleX(1.5); opacity: 0; }
+}
+
+/* Scroll reveal */
 .reveal {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--reveal-delay, 0ms);
-  will-change: opacity, transform;
+  opacity: 0; transform: translateY(22px);
+  transition: opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1);
+  transition-delay: var(--reveal-delay, 0ms); will-change: opacity, transform;
 }
-.reveal.in {
-  opacity: 1;
-  transform: none;
+.reveal.in { opacity: 1; transform: none; }
+
+/* 3D tilt card */
+.tilt-card {
+  transform: perspective(1100px) rotateX(var(--tiltX,0deg)) rotateY(var(--tiltY,0deg));
+  transition: transform 0.18s ease-out; transform-style: preserve-3d;
 }
 
-/* 3D hero card tilt — driven by CSS vars set in Hero.js */
-.tilt-card {
-  transform: perspective(1100px) rotateX(var(--tiltX, 0deg)) rotateY(var(--tiltY, 0deg));
-  transition: transform 0.18s ease-out;
-  transform-style: preserve-3d;
+/* Gradient text helper (CAPS гарчигт) */
+.text-mythic {
+  background: linear-gradient(92deg, var(--gold), #fff 40%, var(--violet) 75%, var(--azure));
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: sheen 6s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1 !important; transform: none !important; transition: none; }
   .tilt-card { transform: none !important; }
+  .page-enter { animation: none !important; }
+  .fx-layer { display: none !important; }
+  .text-mythic { animation: none !important; }
 }
-
-/* JS байхгүй үед reveal-контент далд үлдэхээс сэргийлнэ (no-JS / hydration-аас өмнө) */
 @media (scripting: none) {
   .reveal { opacity: 1 !important; transform: none !important; }
 }

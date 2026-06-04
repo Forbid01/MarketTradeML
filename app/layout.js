@@ -17,14 +17,14 @@ export const metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "MLBB Market",
   },
   icons: { icon: "/icon.svg", apple: "/icon.svg" },
 };
 
 export const viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#06070E",
   width: "device-width",
   initialScale: 1,
 };
@@ -37,7 +37,7 @@ export default async function RootLayout({ children }) {
       lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-white text-slate-900">
+      <body className="min-h-full text-slate-100 antialiased">
         <noscript>
           {/* JS-гүй browser-т scroll-reveal контентыг шууд харагдуулна */}
           <style>{`.reveal{opacity:1 !important;transform:none !important}`}</style>

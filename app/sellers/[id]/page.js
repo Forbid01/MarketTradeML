@@ -24,17 +24,17 @@ export default async function SellerPage({ params }) {
   return (
     <div className="space-y-6">
       {/* Профайл толгой */}
-      <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-50 text-2xl font-semibold text-blue-600">
+      <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#38BDF8]/10 text-2xl font-semibold text-[#38BDF8]">
           {seller.display_name?.[0]?.toUpperCase() ?? "?"}
         </div>
         <div>
-          <h1 className="flex items-center gap-1 text-xl font-bold text-slate-900">
+          <h1 className="flex items-center gap-1 text-xl font-bold text-slate-50">
             {seller.display_name}
-            {seller.is_verified && <BadgeCheck size={20} className="text-blue-600" aria-label="Баталгаажсан" />}
+            {seller.is_verified && <BadgeCheck size={20} className="text-[#38BDF8]" aria-label="Баталгаажсан" />}
           </h1>
-          <p className="mt-1 flex items-center gap-1 text-sm text-slate-500">
-            <Star size={16} filled className="text-amber-500" />
+          <p className="mt-1 flex items-center gap-1 text-sm text-slate-400">
+            <Star size={16} filled className="text-[#F5C451]" />
             {t("seller.meta", {
               rating: Number(seller.rating_avg).toFixed(1),
               n: seller.trades_count,
@@ -46,9 +46,9 @@ export default async function SellerPage({ params }) {
 
       {/* Идэвхтэй зар */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-slate-600">{t("seller.activeListings", { n: listings?.length ?? 0 })}</h2>
+        <h2 className="text-sm font-semibold text-slate-300">{t("seller.activeListings", { n: listings?.length ?? 0 })}</h2>
         {!listings?.length ? (
-          <p className="text-sm text-slate-400">{t("seller.noListings")}</p>
+          <p className="text-sm text-slate-500">{t("seller.noListings")}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {listings.map((l) => (
@@ -65,12 +65,12 @@ export default async function SellerPage({ params }) {
 
       {/* Үнэлгээ */}
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold text-slate-600">{t("seller.reviews", { n: reviews?.length ?? 0 })}</h2>
+        <h2 className="text-sm font-semibold text-slate-300">{t("seller.reviews", { n: reviews?.length ?? 0 })}</h2>
         {!reviews?.length ? (
-          <p className="text-sm text-slate-400">{t("seller.noReviews")}</p>
+          <p className="text-sm text-slate-500">{t("seller.noReviews")}</p>
         ) : (
           reviews.map((r) => (
-            <div key={r.id} className="rounded-lg border border-slate-200 bg-white p-3 text-sm shadow-sm">
+            <div key={r.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm">
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-0.5" aria-label={`${r.stars}/5`}>
                   {Array.from({ length: 5 }).map((_, i) => (
@@ -78,13 +78,13 @@ export default async function SellerPage({ params }) {
                       key={i}
                       size={14}
                       filled={i < r.stars}
-                      className={i < r.stars ? "text-amber-500" : "text-slate-300"}
+                      className={i < r.stars ? "text-[#F5C451]" : "text-white/15"}
                     />
                   ))}
                 </span>
-                <span className="text-xs text-slate-400">{formatDateTime(r.created_at)}</span>
+                <span className="text-xs text-slate-500">{formatDateTime(r.created_at)}</span>
               </div>
-              {r.comment && <p className="mt-1 text-slate-600">{r.comment}</p>}
+              {r.comment && <p className="mt-1 text-slate-300">{r.comment}</p>}
             </div>
           ))
         )}

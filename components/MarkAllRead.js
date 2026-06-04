@@ -22,9 +22,9 @@ export default function MarkAllRead() {
     <button
       onClick={mark}
       disabled={busy}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs text-blue-600 hover:bg-slate-50 hover:border-blue-400 disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-[#38BDF8] hover:bg-white/[0.03] hover:border-[#6D5DF6]/40 disabled:opacity-50"
     >
-      <Check size={14} className="text-blue-600" />
+      <Check size={14} className="text-[#38BDF8]" />
       {t("notif.markAll")}
     </button>
   );

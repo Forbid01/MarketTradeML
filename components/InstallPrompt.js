@@ -62,26 +62,26 @@ export default function InstallPrompt() {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-x-3 bottom-3 z-30 mx-auto max-w-md rounded-xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+    <div className="fixed inset-x-3 bottom-3 z-30 mx-auto max-w-md rounded-xl border border-white/10 bg-[#0B0E1A]/95 p-3 shadow-lg backdrop-blur">
       <div className="flex items-start gap-3">
-        <span className="text-blue-600">
+        <span className="text-[#38BDF8]">
           <Smartphone size={22} />
         </span>
         <div className="flex-1">
-          <p className="text-sm font-medium text-slate-900">{t("install.title")}</p>
-          <p className="mt-0.5 text-xs text-slate-500">
+          <p className="text-sm font-medium text-slate-100">{t("install.title")}</p>
+          <p className="mt-0.5 text-xs text-slate-400">
             {iosHint ? t("install.ios") : t("install.benefit")}
           </p>
         </div>
       </div>
       <div className="mt-2 flex justify-end gap-2">
-        <button onClick={dismiss} className="rounded-lg px-3 py-1.5 text-xs text-slate-500 hover:text-slate-700">
+        <button onClick={dismiss} className="rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:text-slate-200">
           {t("install.dismiss")}
         </button>
         {!iosHint && deferred && (
           <button
             onClick={install}
-            className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700"
+            className="rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
           >
             {t("install.install")}
           </button>

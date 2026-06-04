@@ -27,8 +27,8 @@ export default function ReviewForm({ orderId }) {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="text-sm font-semibold text-slate-600">{t("review.formTitle")}</h3>
+    <form onSubmit={submit} className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <h3 className="text-sm font-semibold text-slate-300">{t("review.formTitle")}</h3>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
           <button
@@ -47,12 +47,12 @@ export default function ReviewForm({ orderId }) {
         onChange={(e) => setComment(e.target.value)}
         rows={2}
         placeholder={t("review.commentPh")}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
       />
-      {err && <p className="text-sm text-red-700">{err}</p>}
+      {err && <p className="text-sm text-red-300">{err}</p>}
       <button
         disabled={busy}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {t("review.submit")}
       </button>

@@ -22,8 +22,8 @@ export default function EscrowActions({ orderId, status, isBuyer, isSeller, isAd
   }
 
   const btn = "rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50";
-  const primary = `${btn} bg-blue-600 text-white hover:bg-blue-700`;
-  const ghost = `${btn} border border-slate-300 text-slate-700 hover:bg-slate-50`;
+  const primary = `${btn} bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white hover:brightness-110`;
+  const ghost = `${btn} border border-white/15 text-slate-200 hover:bg-white/[0.03]`;
   const ok = `${btn} bg-emerald-600 text-white hover:bg-emerald-700`;
 
   const actions = [];
@@ -51,9 +51,9 @@ export default function EscrowActions({ orderId, status, isBuyer, isSeller, isAd
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2">{actions}</div>
       {status === "created" && (isBuyer && !isAdmin) && (
-        <p className="text-xs text-slate-500">{t("escrow.payNote")}</p>
+        <p className="text-xs text-slate-400">{t("escrow.payNote")}</p>
       )}
-      {err && <p className="text-sm text-red-700">{err}</p>}
+      {err && <p className="text-sm text-red-300">{err}</p>}
     </div>
   );
 }

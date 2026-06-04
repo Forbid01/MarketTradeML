@@ -59,14 +59,14 @@ export default async function OrderDetail({ params }) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
-      <Link href="/orders" className="text-sm text-slate-500 hover:text-slate-900">{t("order.backToOrders")}</Link>
+      <Link href="/orders" className="text-sm text-slate-400 hover:text-slate-50">{t("order.backToOrders")}</Link>
 
       {/* Толгой */}
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">{order.listing_title ?? "—"}</h1>
-            <p className="mt-1 text-xs text-slate-400">
+            <h1 className="text-lg font-bold text-slate-50">{order.listing_title ?? "—"}</h1>
+            <p className="mt-1 text-xs text-slate-500">
               {isBuyer ? t("order.buyer") : isSeller ? t("order.seller") : t("order.admin")} · {formatDateTime(order.created_at, locale)}
             </p>
           </div>
@@ -76,20 +76,20 @@ export default async function OrderDetail({ params }) {
         <EscrowStepper status={order.status} />
 
         <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
-          <span className="text-slate-500">{t("order.amount")}: <b className="text-slate-900 font-semibold">{formatMNT(order.amount, locale)}</b></span>
-          <span className="text-slate-500">{t("order.fee")}: <b className="text-slate-900 font-semibold">{formatMNT(order.fee, locale)}</b></span>
-          <span className="text-slate-500">{t("order.toSeller")}: <b className="text-slate-900 font-semibold">{formatMNT(order.amount - order.fee, locale)}</b></span>
-          <span className="text-slate-500">{t("order.payout")}: <b className="text-slate-900 font-semibold">{t(`payoutStatus.${order.payout_status}`)}</b></span>
+          <span className="text-slate-400">{t("order.amount")}: <b className="text-slate-50 font-semibold">{formatMNT(order.amount, locale)}</b></span>
+          <span className="text-slate-400">{t("order.fee")}: <b className="text-slate-50 font-semibold">{formatMNT(order.fee, locale)}</b></span>
+          <span className="text-slate-400">{t("order.toSeller")}: <b className="text-slate-50 font-semibold">{formatMNT(order.amount - order.fee, locale)}</b></span>
+          <span className="text-slate-400">{t("order.payout")}: <b className="text-slate-50 font-semibold">{t(`payoutStatus.${order.payout_status}`)}</b></span>
         </div>
 
         {order.status === "inspecting" && order.inspection_ends && (
-          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-sm text-amber-700">
-            <Clock size={16} className="shrink-0 text-amber-600" />
+          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#F5C451]/10 px-3 py-1.5 text-sm text-[#F5C451]">
+            <Clock size={16} className="shrink-0 text-[#F5C451]" />
             {t("order.inspection", { left: timeLeft(order.inspection_ends, locale), date: formatDateTime(order.inspection_ends, locale) })}
           </p>
         )}
 
-        <div className="mt-3 space-y-3 border-t border-slate-200 pt-3">
+        <div className="mt-3 space-y-3 border-t border-white/10 pt-3">
           {order.status === "created" && isBuyer && <QPayPay orderId={order.id} />}
           <EscrowActions
             orderId={order.id}
@@ -103,8 +103,8 @@ export default async function OrderDetail({ params }) {
 
       {/* Админ удирдлага */}
       {isAdmin && (
-        <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-          <h2 className="text-sm font-semibold text-amber-700">{t("order.adminControls")}</h2>
+        <div className="space-y-3 rounded-xl border border-[#F5C451]/30 bg-[#F5C451]/10 p-4">
+          <h2 className="text-sm font-semibold text-[#F5C451]">{t("order.adminControls")}</h2>
           <AdminVerifyToggle userId={order.seller_id} isVerified={sellerProfile?.is_verified ?? false} />
           {order.status === "disputed" && dispute && <AdminDisputeResolve disputeId={dispute.id} />}
           {order.status === "completed" && order.payout_status === "pending" && (
@@ -124,19 +124,19 @@ export default async function OrderDetail({ params }) {
       {/* Review */}
       {order.status === "completed" && (
         review ? (
-          <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
-            <h3 className="mb-1 font-semibold text-slate-700">{t("review.yours")}</h3>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm">
+            <h3 className="mb-1 font-semibold text-slate-200">{t("review.yours")}</h3>
             <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
                   size={16}
                   filled={i < review.stars}
-                  className={i < review.stars ? "text-amber-500" : "text-slate-300"}
+                  className={i < review.stars ? "text-[#F5C451]" : "text-white/15"}
                 />
               ))}
             </div>
-            {review.comment && <p className="mt-1 text-slate-600">{review.comment}</p>}
+            {review.comment && <p className="mt-1 text-slate-300">{review.comment}</p>}
           </div>
         ) : isBuyer ? (
           <ReviewForm orderId={order.id} />

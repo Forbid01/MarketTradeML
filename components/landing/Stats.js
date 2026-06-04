@@ -54,8 +54,8 @@ function Stat({ raw, label }) {
 
   return (
     <div ref={ref} className="text-center">
-      <div className="text-4xl font-extrabold tracking-tight text-blue-600 sm:text-5xl">{display}</div>
-      <div className="mt-1 text-sm text-slate-500">{label}</div>
+      <div className="bg-gradient-to-br from-[#F5C451] to-[#38BDF8] bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl">{display}</div>
+      <div className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">{label}</div>
     </div>
   );
 }
@@ -68,7 +68,7 @@ export default function Stats() {
     { raw: t("landing.stat3Num"), label: t("landing.stat3Label") },
   ];
   return (
-    <div className="grid grid-cols-3 gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-8">
+    <div className="grid grid-cols-3 gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-8">
       {items.map((it, i) => (
         <Stat key={i} raw={it.raw} label={it.label} />
       ))}

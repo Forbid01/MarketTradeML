@@ -15,7 +15,7 @@ export default function LanguageSwitcher() {
   return (
     <button
       onClick={() => setLocale(locale === "mn" ? "en" : "mn")}
-      className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+      className="rounded-lg border border-white/10 px-2 py-1.5 text-xs font-medium text-slate-400 hover:bg-white/[0.03] hover:text-[#38BDF8]"
       aria-label="Хэл солих / Switch language"
     >
       {locale === "mn" ? "EN" : "МН"}

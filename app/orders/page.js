@@ -19,10 +19,10 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-slate-900">{t("order.title")}</h1>
+      <h1 className="text-xl font-bold text-slate-50">{t("order.title")}</h1>
 
       {!orders?.length ? (
-        <p className="py-12 text-center text-slate-400">{t("order.empty")}</p>
+        <p className="py-12 text-center text-slate-500">{t("order.empty")}</p>
       ) : (
         <ul className="space-y-2">
           {orders.map((o) => {
@@ -33,13 +33,13 @@ export default async function OrdersPage() {
               <li key={o.id}>
                 <Link
                   href={`/orders/${o.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm transition hover:border-blue-400 hover:shadow-md"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-[#6D5DF6]/40 hover:bg-white/[0.06]"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-900">
+                    <p className="truncate text-sm font-medium text-slate-50">
                       {o.listing_title ?? t("common.listing")}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-400">
                       {role} · {formatMNT(o.amount)} · {formatDateTime(o.created_at)}
                     </p>
                   </div>

@@ -40,7 +40,7 @@ export default function OwnerControls({ listingId, status }) {
 
   if (status === "reserved" || status === "sold") {
     return (
-      <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500">
+      <p className="rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm text-slate-400">
         {t("owner.cannotEdit", { status: t(`listingStatus.${status}`) })}
       </p>
     );
@@ -53,7 +53,7 @@ export default function OwnerControls({ listingId, status }) {
           <button
             onClick={() => setStatus("hidden")}
             disabled={busy}
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-slate-200 hover:bg-white/10 disabled:opacity-50"
           >
             {t("owner.hide")}
           </button>
@@ -61,21 +61,21 @@ export default function OwnerControls({ listingId, status }) {
           <button
             onClick={() => setStatus("active")}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-blue-400 bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-3 py-2 text-sm text-[#7dd3fc] hover:brightness-110 disabled:opacity-50"
           >
-            <BadgeCheck size={16} className="text-blue-600" />
+            <BadgeCheck size={16} className="text-[#38BDF8]" />
             {t("owner.activate")}
           </button>
         )}
         <button
           onClick={softDelete}
           disabled={busy}
-          className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 hover:bg-red-100 disabled:opacity-50"
+          className="rounded-lg border border-red-500/30 bg-red-500/15 px-3 py-2 text-sm text-red-300 hover:bg-red-500/25 disabled:opacity-50"
         >
           {t("owner.delete")}
         </button>
       </div>
-      {err ? <p className="text-sm text-red-600">{err}</p> : null}
+      {err ? <p className="text-sm text-red-300">{err}</p> : null}
     </div>
   );
 }

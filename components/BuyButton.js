@@ -29,11 +29,11 @@ export default function BuyButton({ listingId }) {
       <button
         onClick={buy}
         disabled={busy}
-        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500 disabled:opacity-100"
+        className="w-full rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-3 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50"
       >
         {busy ? t("buy.creating") : t("buy.cta")}
       </button>
-      {err && <p className="text-sm text-red-700">{err}</p>}
+      {err && <p className="text-sm text-red-300">{err}</p>}
     </div>
   );
 }

@@ -28,15 +28,15 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
 
   if (dispute) {
     return (
-      <section className="space-y-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm">
-        <h3 className="flex items-center gap-2 font-semibold text-red-700">
-          <Shield size={16} className="text-red-700" />
+      <section className="space-y-2 rounded-xl border border-red-500/30 bg-red-500/15 p-4 text-sm">
+        <h3 className="flex items-center gap-2 font-semibold text-red-300">
+          <Shield size={16} className="text-red-300" />
           {t("dispute.heading")}
         </h3>
-        <p className="text-slate-600"><b>{t("dispute.reason")}:</b> {dispute.reason}</p>
-        <p className="text-slate-500">{t("dispute.status")}: {t(`dispute.${dispute.status}`)}</p>
-        {dispute.admin_note && <p className="text-slate-500"><b>{t("dispute.admin")}:</b> {dispute.admin_note}</p>}
-        <p className="text-xs text-slate-400">{formatDateTime(dispute.created_at)}</p>
+        <p className="text-slate-300"><b>{t("dispute.reason")}:</b> {dispute.reason}</p>
+        <p className="text-slate-400">{t("dispute.status")}: {t(`dispute.${dispute.status}`)}</p>
+        {dispute.admin_note && <p className="text-slate-400"><b>{t("dispute.admin")}:</b> {dispute.admin_note}</p>}
+        <p className="text-xs text-slate-500">{formatDateTime(dispute.created_at)}</p>
       </section>
     );
   }
@@ -44,9 +44,9 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
   if (!canOpen) return null;
 
   return (
-    <form onSubmit={open} className="space-y-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-        <Shield size={16} className="text-slate-500" />
+    <form onSubmit={open} className="space-y-2 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-50">
+        <Shield size={16} className="text-slate-400" />
         {t("dispute.openTitle")}
       </h3>
       <textarea
@@ -54,12 +54,12 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
         onChange={(e) => setReason(e.target.value)}
         rows={2}
         placeholder={t("dispute.reasonPh")}
-        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
       />
-      {err && <p className="text-sm text-red-700">{err}</p>}
+      {err && <p className="text-sm text-red-300">{err}</p>}
       <button
         disabled={busy}
-        className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 hover:bg-red-100 disabled:opacity-50"
+        className="rounded-lg border border-red-500/30 bg-red-500/15 px-4 py-2 text-sm text-red-300 hover:brightness-110 disabled:opacity-50"
       >
         {t("dispute.openBtn")}
       </button>

@@ -27,12 +27,12 @@ export default function AdminVerifyToggle({ userId, isVerified }) {
       <button
         onClick={toggle}
         disabled={busy}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs text-blue-700 hover:bg-blue-100 disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-3 py-1.5 text-xs text-[#7dd3fc] hover:bg-[#38BDF8]/20 disabled:opacity-50"
       >
-        <BadgeCheck size={14} className="text-blue-600" />
+        <BadgeCheck size={14} className="text-[#38BDF8]" />
         {isVerified ? t("adminAct.unverify") : t("adminAct.verify")}
       </button>
-      {err && <span className="text-xs text-red-700">{err}</span>}
+      {err && <span className="text-xs text-red-300">{err}</span>}
     </div>
   );
 }

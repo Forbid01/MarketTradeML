@@ -1,10 +1,10 @@
 const TONES = {
-  zinc: "bg-slate-100 text-slate-600 ring-slate-200",
-  blue: "bg-blue-50 text-blue-700 ring-blue-200",
-  amber: "bg-amber-50 text-amber-700 ring-amber-200",
-  green: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  red: "bg-red-50 text-red-700 ring-red-200",
-  violet: "bg-violet-50 text-violet-700 ring-violet-200",
+  zinc: "bg-white/10 text-slate-300 ring-white/15",
+  blue: "bg-[#38BDF8]/15 text-[#7dd3fc] ring-[#38BDF8]/30",
+  amber: "bg-[#F5C451]/15 text-[#f5c451] ring-[#F5C451]/30",
+  green: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/30",
+  red: "bg-red-500/15 text-red-300 ring-red-500/30",
+  violet: "bg-[#6D5DF6]/20 text-[#b3a9ff] ring-[#6D5DF6]/40",
 };
 
 export default function StatusBadge({ label, tone = "zinc" }) {
