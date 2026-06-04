@@ -6,6 +6,7 @@ import { formatMNT, formatDateTime } from "@/lib/format";
 import { getT, getLocale } from "@/lib/i18n/server";
 import StatusBadge from "@/components/StatusBadge";
 import BoostPay from "@/components/boost/BoostPay";
+import BoostAdmin from "@/components/boost/BoostAdmin";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,10 @@ export default async function BoostOrderPage({ params }) {
           ) : null}
         </div>
       </div>
+
+      {(isAdmin || o.booster_id === profile.id) && (o.status === "paid" || o.status === "in_progress") && (
+        <BoostAdmin boostId={o.id} status={o.status} isAdmin={isAdmin} isBooster={o.booster_id === profile.id} />
+      )}
     </div>
   );
 }

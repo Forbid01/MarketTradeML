@@ -35,13 +35,29 @@ function FilterBar({ sp, t }) {
         </select>
       </div>
       <div className="flex flex-col">
+        <label className="mb-1 text-xs text-slate-400">{t("home.priceRange")}</label>
+        <div className="flex items-center gap-1">
+          <input name="min" defaultValue={sp.min ?? ""} inputMode="numeric" placeholder={t("home.min")}
+            className="w-20 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-slate-50 placeholder:text-slate-500 outline-none focus:border-[#6D5DF6]" />
+          <span className="text-slate-500">–</span>
+          <input name="max" defaultValue={sp.max ?? ""} inputMode="numeric" placeholder={t("home.max")}
+            className="w-20 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-sm text-slate-50 placeholder:text-slate-500 outline-none focus:border-[#6D5DF6]" />
+        </div>
+      </div>
+      <div className="flex flex-col">
         <label className="mb-1 text-xs text-slate-400">{t("home.sort")}</label>
         <select name="sort" defaultValue={sp.sort ?? "new"} className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-slate-50 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]">
           <option value="new">{t("home.sortNew")}</option>
           <option value="price_asc">{t("home.sortPriceAsc")}</option>
           <option value="price_desc">{t("home.sortPriceDesc")}</option>
+          <option value="rating">{t("home.sortRating")}</option>
         </select>
       </div>
+      <label className="flex items-center gap-1.5 pb-1.5 text-xs text-slate-300">
+        <input type="checkbox" name="verified" value="1" defaultChecked={Boolean(sp.verified)}
+          className="h-4 w-4 accent-[#6D5DF6]" />
+        {t("home.verifiedOnly")}
+      </label>
       <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-1.5 text-sm font-medium text-white hover:brightness-110">
         <Search size={16} />
         {t("home.filter")}
@@ -68,6 +84,9 @@ export default async function Browse({ searchParams }) {
     rank: sp.rank,
     server: sp.server,
     sort: sp.sort,
+    minPrice: sp.min,
+    maxPrice: sp.max,
+    verified: Boolean(sp.verified),
   });
 
   return (

@@ -20,6 +20,10 @@ export async function GET(req) {
     return new NextResponse("forbidden", { status: 403 });
   }
   try {
+    // 0) хуучирсан түр өгөгдөл цэвэрлэх (хязгааргүй өсөхөөс сэргийлнэ)
+    await query(`delete from public.rate_events where created_at < now() - interval '1 day'`);
+    await query(`delete from public.email_otps where created_at < now() - interval '1 day'`);
+
     // 1) inspection timeout sweep
     const swept = await callScalar("select public.sweep_inspection_timeouts()");
 

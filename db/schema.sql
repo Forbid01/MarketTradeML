@@ -765,3 +765,11 @@ begin
   return 'paid';
 end;
 $$;
+
+-- ═══════════════════════ Rate limiting (mutating action-ууд) ═══════════════════════
+create table if not exists public.rate_events (
+  id         bigserial primary key,
+  bucket     text not null,        -- "<action>:<userId>"
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_rate_events_bucket on public.rate_events (bucket, created_at desc);
