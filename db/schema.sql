@@ -172,8 +172,12 @@ create table if not exists public.messages (
   order_id     uuid not null references public.orders(id) on delete cascade,
   sender_id    uuid not null references public.users(id) on delete restrict,
   body         text not null check (char_length(body) between 1 and 4000),
+  seq          bigserial,                                -- монотон дараалал (чат cursor-д)
   created_at   timestamptz not null default now()
 );
+-- Одоо байгаа хүснэгтэд seq нэмэх (cursor-д timestamp нарийвчлалын асуудлаас сэргийлнэ)
+alter table public.messages add column if not exists seq bigserial;
+create index if not exists idx_messages_order_seq on public.messages (order_id, seq);
 
 create table if not exists public.payouts (
   id               uuid primary key default gen_random_uuid(),
