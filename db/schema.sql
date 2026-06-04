@@ -773,3 +773,36 @@ create table if not exists public.rate_events (
   created_at timestamptz not null default now()
 );
 create index if not exists idx_rate_events_bucket on public.rate_events (bucket, created_at desc);
+
+-- ═══════════════════════ Promo код (boost хямдрал) ═══════════════════════
+create table if not exists public.promo_codes (
+  code        text primary key,
+  percent_off int not null check (percent_off between 1 and 90),
+  active      boolean not null default true,
+  expires_at  timestamptz,
+  max_uses    int,
+  used_count  int not null default 0,
+  created_at  timestamptz not null default now()
+);
+
+-- ═══════════════════════ Watchlist: зар зарагдвал мэдэгдэх ═══════════════════════
+create or replace function public.notify_favorites_sold()
+returns trigger language plpgsql as $$
+begin
+  if new.status = 'sold' and old.status is distinct from 'sold' then
+    insert into public.notifications (user_id, type, title, body)
+    select f.user_id, 'listing_sold', 'Хадгалсан зар зарагдлаа', new.title
+    from public.favorites f where f.listing_id = new.id;
+  end if;
+  return null;
+end;
+$$;
+do $$ begin
+  create trigger trg_notify_fav_sold after update on public.listings
+    for each row when (old.status is distinct from new.status)
+    execute function public.notify_favorites_sold();
+exception when duplicate_object then null; end $$;
+
+-- Демо промо код (хүсвэл өөрчилнө)
+insert into public.promo_codes (code, percent_off) values ('WELCOME10', 10)
+on conflict (code) do nothing;

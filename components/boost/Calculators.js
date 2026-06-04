@@ -28,11 +28,12 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, ch
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
+  const [promo, setPromo] = useState("");
 
   async function order() {
     setBusy(true);
     setErr(null);
-    const r = await createBoostOrder(service, config);
+    const r = await createBoostOrder(service, { ...config, promo: promo.trim() || undefined });
     setBusy(false);
     if (r.error) { setErr(r.error); return; }
     router.push(`/boost/${r.id}`);
@@ -54,7 +55,14 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, ch
 
       <div className="mt-5 space-y-4">{children}</div>
 
-      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+      <input
+        value={promo}
+        onChange={(e) => setPromo(e.target.value.toUpperCase())}
+        placeholder={t("boost.promoPh")}
+        className="mt-4 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs uppercase tracking-wide text-slate-50 placeholder:text-slate-500 outline-none focus:border-[#6D5DF6]"
+      />
+
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
         <div>
           <div className="text-[10px] uppercase tracking-wide text-slate-500">
             {t("boost.total")} · {matches} {t("boost.matches")}
