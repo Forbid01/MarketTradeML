@@ -82,6 +82,6 @@ supabase/functions/     # Edge Functions (create-invoice, qpay-callback, qpay-re
 
 ## Deploy
 - **Vercel**: project import → env var-уудыг тохируул (`NEXT_PUBLIC_SUPABASE_*`). Арилжаанд **Pro**.
-- **Supabase**: `db push` + `functions deploy` (callback/reconcile нь `--no-verify-jwt`) + pg_cron
-  (`inspection-sweep`, `qpay-reconcile`). Дэлгэрэнгүй: [supabase/README.md](supabase/README.md).
-# MarketTradeML
+- **Supabase**: `db push` + `functions deploy` (`verify_jwt` нь `config.toml`-д тохируулагдсан) +
+  Edge secrets (`QPAY_*`, `CRON_SECRET`, `APP_ORIGIN`) + pg_cron (`inspection-sweep`, `qpay-reconcile`).
+  Дэлгэрэнгүй: [supabase/README.md](supabase/README.md).
