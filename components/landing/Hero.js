@@ -30,11 +30,16 @@ export default function Hero() {
       raf = requestAnimationFrame(() => {
         stage.style.setProperty("--tiltY", `${px * 14}deg`);
         stage.style.setProperty("--tiltX", `${-py * 10}deg`);
+        // картан дээрх specular glare-ийн төв (HeroShowcase ашиглана)
+        stage.style.setProperty("--mx", `${(px + 0.5) * 100}%`);
+        stage.style.setProperty("--my", `${(py + 0.5) * 100}%`);
       });
     };
     const onLeave = () => {
       stage.style.setProperty("--tiltX", "0deg");
       stage.style.setProperty("--tiltY", "0deg");
+      stage.style.setProperty("--mx", "50%");
+      stage.style.setProperty("--my", "32%");
     };
     wrap.addEventListener("pointermove", onMove);
     wrap.addEventListener("pointerleave", onLeave);
