@@ -1,0 +1,162 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useT } from "@/lib/i18n/client";
+import { formatMNT } from "@/lib/format";
+import { BOOST, RANK_LADDER, rankMatches, boostTotal } from "@/lib/boost";
+import { Star, ShieldCheck, RefreshCw, ArrowRight, BadgeCheck } from "@/components/icons";
+
+function Toggle({ on, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+        on ? "border-[#6D5DF6]/50 bg-[#6D5DF6]/15 text-[#b3a9ff]" : "border-white/10 text-slate-400 hover:bg-white/5"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Card({ icon, title, desc, perMatch, matches, total, children }) {
+  const t = useT();
+  const [done, setDone] = useState(false);
+  return (
+    <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-[#6D5DF6]/30">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="flex items-center gap-2 text-lg font-bold uppercase tracking-wide text-slate-50">{icon}{title}</h3>
+          <p className="mt-1 text-sm text-slate-400">{desc}</p>
+        </div>
+        <div className="shrink-0 rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-3 py-1.5 text-right">
+          <div className="text-[10px] uppercase tracking-wide text-slate-400">{t("boost.perMatch")}</div>
+          <div className="text-sm font-bold text-[#38BDF8]">{formatMNT(perMatch)}</div>
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-4">{children}</div>
+
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+        <div>
+          <div className="text-[10px] uppercase tracking-wide text-slate-500">
+            {t("boost.total")} · {matches} {t("boost.matches")}
+          </div>
+          <div className="bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-2xl font-extrabold text-transparent">
+            {formatMNT(total)}
+          </div>
+        </div>
+        <button
+          onClick={() => setDone(true)}
+          disabled={matches <= 0}
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:opacity-40"
+        >
+          {t("boost.order")} <ArrowRight size={16} />
+        </button>
+      </div>
+      {done && (
+        <p className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/15 p-2 text-center text-xs text-emerald-300">
+          {t("boost.requested")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Slider({ label, value, min, max, onChange }) {
+  return (
+    <div>
+      <div className="mb-1 flex justify-between text-xs text-slate-400">
+        <span>{label}</span>
+        <span className="font-semibold text-slate-100">{value}</span>
+      </div>
+      <input
+        type="range" min={min} max={max} value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full accent-[#6D5DF6]"
+      />
+    </div>
+  );
+}
+
+export function WinrateBoostCalc() {
+  const t = useT();
+  const [wins, setWins] = useState(BOOST.winrate.def);
+  const [express, setExpress] = useState(false);
+  const [duo, setDuo] = useState(false);
+  const total = useMemo(() => boostTotal(wins, BOOST.winrate.perMatch, { express, duo }), [wins, express, duo]);
+  return (
+    <Card
+      icon={<RefreshCw size={20} className="text-[#38BDF8]" />}
+      title={t("boost.winrate.title")} desc={t("boost.winrate.desc")}
+      perMatch={BOOST.winrate.perMatch} matches={wins} total={total}
+    >
+      <Slider label={t("boost.winrate.winsLabel")} value={wins} min={BOOST.winrate.min} max={BOOST.winrate.max} onChange={setWins} />
+      <div className="flex flex-wrap gap-2">
+        <Toggle on={express} onClick={() => setExpress((v) => !v)}>{t("boost.express")}</Toggle>
+        <Toggle on={duo} onClick={() => setDuo((v) => !v)}>{t("boost.duo")}</Toggle>
+      </div>
+    </Card>
+  );
+}
+
+export function RankBoostCalc() {
+  const t = useT();
+  const [from, setFrom] = useState(4); // Epic
+  const [to, setTo] = useState(6); // Mythic
+  const [express, setExpress] = useState(false);
+  const [duo, setDuo] = useState(false);
+  const matches = useMemo(() => rankMatches(from, to), [from, to]);
+  const total = useMemo(() => boostTotal(matches, BOOST.rank.perMatch, { express, duo }), [matches, express, duo]);
+  const sel = "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]";
+  return (
+    <Card
+      icon={<Star size={20} filled className="text-[#F5C451]" />}
+      title={t("boost.rank.title")} desc={t("boost.rank.desc")}
+      perMatch={BOOST.rank.perMatch} matches={matches} total={total}
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="mb-1 block text-xs text-slate-400">{t("boost.rank.from")}</label>
+          <select className={sel} value={from} onChange={(e) => setFrom(Number(e.target.value))}>
+            {RANK_LADDER.map((r, i) => <option key={r} value={i}>{r}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-400">{t("boost.rank.to")}</label>
+          <select className={sel} value={to} onChange={(e) => setTo(Number(e.target.value))}>
+            {RANK_LADDER.map((r, i) => <option key={r} value={i}>{r}</option>)}
+          </select>
+        </div>
+      </div>
+      <p className="text-xs text-slate-500">{t("boost.rank.est", { n: matches })}</p>
+      <div className="flex flex-wrap gap-2">
+        <Toggle on={express} onClick={() => setExpress((v) => !v)}>{t("boost.express")}</Toggle>
+        <Toggle on={duo} onClick={() => setDuo((v) => !v)}>{t("boost.duo")}</Toggle>
+      </div>
+    </Card>
+  );
+}
+
+export function SquadRentCalc() {
+  const t = useT();
+  const [m, setM] = useState(BOOST.squad.def);
+  const [express, setExpress] = useState(false);
+  const total = useMemo(() => boostTotal(m, BOOST.squad.perMatch, { express }), [m, express]);
+  return (
+    <Card
+      icon={<ShieldCheck size={20} className="text-[#6D5DF6]" />}
+      title={t("boost.squad.title")} desc={t("boost.squad.desc")}
+      perMatch={BOOST.squad.perMatch} matches={m} total={total}
+    >
+      <Slider label={t("boost.squad.matchesLabel")} value={m} min={BOOST.squad.min} max={BOOST.squad.max} onChange={setM} />
+      <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+        <BadgeCheck size={14} className="text-[#38BDF8]" /> {t("boost.squad.note")}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Toggle on={express} onClick={() => setExpress((v) => !v)}>{t("boost.express")}</Toggle>
+      </div>
+    </Card>
+  );
+}

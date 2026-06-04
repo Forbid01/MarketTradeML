@@ -35,6 +35,7 @@ export default function MobileMenu({ authed, displayName, role, isVerified, unre
           <div className="fixed inset-0 z-30 bg-black/40" onClick={close} aria-hidden />
           <nav className="absolute left-0 right-0 top-14 z-40 mx-2 rounded-xl border border-white/10 bg-[#0B0E1A] p-2 shadow-lg">
             <Link href="/browse" className={link} onClick={close}>{t("nav.browse")}</Link>
+            <Link href="/boost" className={link} onClick={close}>{t("nav.boost")}</Link>
             {authed ? (
               <>
                 <Link href="/listings/new" className={link} onClick={close}>

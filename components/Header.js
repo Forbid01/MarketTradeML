@@ -28,6 +28,9 @@ export default async function Header() {
             <Link href="/browse" className="px-3 py-1.5 text-slate-300 hover:text-white">
               {t("nav.browse")}
             </Link>
+            <Link href="/boost" className="px-3 py-1.5 text-slate-300 hover:text-white">
+              {t("nav.boost")}
+            </Link>
             {authed ? (
               <>
                 <Link
