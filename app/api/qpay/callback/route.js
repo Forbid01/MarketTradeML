@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { query, queryOne } from "@/lib/db";
 import { checkPayment, summarizePaidRows } from "@/lib/qpay";
+import { sendEmail, emailShell } from "@/lib/email";
 
 export const dynamic = "force-dynamic"; // нууц токентой handler — cache хийхгүй
 
@@ -38,6 +39,31 @@ async function handle(req) {
         : await query(`select public.confirm_payment($1,$2,$3,$4::jsonb,$5::jsonb) as r`,
             [orderId, order.qpay_invoice_id, paidTotal, JSON.stringify(payments), JSON.stringify(check)]);
       result = rows[0].r;
+    }
+
+    // Төлбөр баталгаажвал и-мэйл мэдэгдэл (best-effort)
+    if (result === "paid") {
+      try {
+        if (kind === "boost") {
+          const b = await queryOne(
+            `select u.email from public.boost_orders bo join public.users u on u.id = bo.buyer_id where bo.id = $1`,
+            [orderId]
+          );
+          await sendEmail({ to: b?.email, subject: "MLBB — boost төлбөр баталгаажлаа",
+            html: emailShell("Төлбөр баталгаажлаа", "Таны boost захиалгын төлбөр амжилттай хүлээн авлаа. Бид удахгүй эхэлнэ.") });
+        } else {
+          const parties = await query(
+            `select u.email, (u.id = o.buyer_id) as is_buyer, l.title
+               from public.orders o join public.listings l on l.id = o.listing_id
+               join public.users u on u.id in (o.buyer_id, o.seller_id)
+              where o.id = $1`, [orderId]
+          );
+          for (const p of parties) {
+            await sendEmail({ to: p.email, subject: "MLBB — escrow төлбөр баталгаажлаа",
+              html: emailShell("Төлбөр escrow-д хүлээн авлаа", `<b>${p.title}</b> захиалгын төлбөр escrow-д хадгалагдлаа.`) });
+          }
+        }
+      } catch (e) { console.error("payment email:", e?.message ?? e); }
     }
     return NextResponse.json({ ok: true, result });
   } catch (e) {

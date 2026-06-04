@@ -13,6 +13,27 @@ import { ImageIcon, BadgeCheck, Star, ShieldCheck } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
+// SEO/OG — зар тус бүрийн динамик метадата (хуваалцах, хайлтад)
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  if (!isDbConfigured) return { title: "MLBB Market" };
+  try {
+    const l = await getListingById(id);
+    if (!l) return { title: "MLBB Market" };
+    const title = `${l.title} · ${l.rank} — MLBB Market`;
+    const description = (l.description?.slice(0, 160)) || `${l.rank} · ${l.server} · ${formatMNT(l.price)}`;
+    const img = l.images?.[0]?.url;
+    return {
+      title,
+      description,
+      openGraph: { title, description, type: "website", images: img ? [img] : [] },
+      twitter: { card: img ? "summary_large_image" : "summary", title, description },
+    };
+  } catch {
+    return { title: "MLBB Market" };
+  }
+}
+
 export default async function ListingDetail({ params }) {
   if (!isDbConfigured) redirect("/");
   const { id } = await params;
