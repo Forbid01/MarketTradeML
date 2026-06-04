@@ -3,12 +3,13 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { BadgeCheck, Star } from "@/components/icons";
+import SignOutButton from "@/components/SignOutButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const { user, profile } = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user || !profile) redirect("/login");
   const t = await getT();
 
   return (
@@ -17,7 +18,6 @@ export default async function AccountPage() {
 
       <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
         <Row label={t("account.name")} value={profile?.display_name} />
-        <Row label={t("account.phone")} value={profile?.phone ?? user.phone ?? "—"} />
         <Row label={t("account.email")} value={user.email ?? "—"} />
         <Row
           label={t("account.verified")}
@@ -52,11 +52,9 @@ export default async function AccountPage() {
         >
           {t("account.myOrders")}
         </Link>
-        <form action="/auth/signout" method="post" className="flex-1">
-          <button className="w-full rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700 hover:bg-red-100">
-            {t("account.signout")}
-          </button>
-        </form>
+        <div className="flex-1">
+          <SignOutButton />
+        </div>
       </div>
     </div>
   );

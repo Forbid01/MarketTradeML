@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { setChecklistItem } from "@/lib/actions";
 import { CHECKLIST_FIELDS } from "@/lib/constants";
 import { useT } from "@/lib/i18n/client";
 import { Bell, Check } from "@/components/icons";
@@ -10,7 +10,6 @@ import { Bell, Check } from "@/components/icons";
 // Build Plan 1.11: ШИНЭЧИЛСЭН шилжүүлгийн шалгах жагсаалт.
 export default function TransferChecklist({ orderId, checklist, canEdit }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [state, setState] = useState(checklist ?? {});
   const [busy, setBusy] = useState(false);
@@ -19,13 +18,9 @@ export default function TransferChecklist({ orderId, checklist, canEdit }) {
     if (!canEdit) return;
     setBusy(true);
     setState((s) => ({ ...s, [key]: value }));
-    // Шууд table update БИШ — server-side тал шалгадаг RPC (buyer-side талбарыг зөвхөн
+    // Шууд table update БИШ — server-side тал шалгадаг server action (buyer-side талбарыг зөвхөн
     // худалдан авагч, seller-side-ийг зөвхөн зарагч тэмдэглэнэ).
-    const { error } = await supabase.rpc("set_checklist_item", {
-      p_order_id: orderId,
-      p_field: key,
-      p_value: value,
-    });
+    const { error } = await setChecklistItem(orderId, key, value);
     setBusy(false);
     if (error) {
       setState((s) => ({ ...s, [key]: !value })); // буцаах

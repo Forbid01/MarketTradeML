@@ -1,6 +1,5 @@
-import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
-import { listingImageUrl } from "@/lib/supabase/storage";
+import { isDbConfigured } from "@/lib/db";
+import { listActiveListings } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import { RANKS, SERVERS } from "@/lib/constants";
 import ListingCard from "@/components/ListingCard";
@@ -55,7 +54,7 @@ export default async function Browse({ searchParams }) {
   const sp = (await searchParams) ?? {};
   const t = await getT();
 
-  if (!isSupabaseConfigured) {
+  if (!isDbConfigured) {
     return (
       <div className="space-y-6">
         <PageHead t={t} />
@@ -64,60 +63,30 @@ export default async function Browse({ searchParams }) {
     );
   }
 
-  const supabase = await createClient();
-
-  let query = supabase
-    .from("listings")
-    .select("id, title, price, server, rank, created_at, seller_id, listing_images(storage_path, sort_order)")
-    .eq("status", "active")
-    .is("deleted_at", null);
-
-  if (sp.rank) query = query.eq("rank", sp.rank);
-  if (sp.server) query = query.eq("server", sp.server);
-  if (sp.q) query = query.ilike("title", `%${sp.q}%`);
-
-  if (sp.sort === "price_asc") query = query.order("price", { ascending: true });
-  else if (sp.sort === "price_desc") query = query.order("price", { ascending: false });
-  else query = query.order("created_at", { ascending: false });
-
-  const { data: listings, error } = await query.limit(48);
-
-  let profileMap = {};
-  if (listings?.length) {
-    const sellerIds = [...new Set(listings.map((l) => l.seller_id))];
-    const { data: profiles } = await supabase
-      .from("public_profiles")
-      .select("id, display_name, is_verified, rating_avg")
-      .in("id", sellerIds);
-    for (const p of profiles ?? []) profileMap[p.id] = p;
-  }
+  const listings = await listActiveListings({
+    q: sp.q,
+    rank: sp.rank,
+    server: sp.server,
+    sort: sp.sort,
+  });
 
   return (
     <div className="space-y-6">
       <PageHead t={t} />
       <FilterBar sp={sp} t={t} />
 
-      {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {t("common.error")}
-        </p>
-      )}
-
       {!listings?.length ? (
         <p className="py-16 text-center text-slate-400">{t("home.empty")}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {listings.map((l) => {
-            const img = (l.listing_images ?? []).sort((a, b) => a.sort_order - b.sort_order)[0];
-            return (
-              <ListingCard
-                key={l.id}
-                listing={l}
-                seller={profileMap[l.seller_id]}
-                imageUrl={listingImageUrl(img?.storage_path)}
-              />
-            );
-          })}
+          {listings.map((l) => (
+            <ListingCard
+              key={l.id}
+              listing={l}
+              seller={l.seller}
+              imageUrl={l.imageUrl}
+            />
+          ))}
         </div>
       )}
     </div>

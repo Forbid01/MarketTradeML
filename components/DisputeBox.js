@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { openDispute } from "@/lib/actions";
 import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 import { Shield } from "@/components/icons";
 
-// Build Plan 1.13: маргаан нээх (open_dispute RPC). Шийдвэрлэлт админ талд (AdminDisputeResolve).
+// Build Plan 1.13: маргаан нээх (openDispute server action). Шийдвэрлэлт админ талд (AdminDisputeResolve).
 export default function DisputeBox({ orderId, status, dispute, canOpen }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,12 +20,9 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
     if (!reason.trim()) return;
     setBusy(true);
     setErr(null);
-    const { error } = await supabase.rpc("open_dispute", {
-      p_order_id: orderId,
-      p_reason: reason.trim(),
-    });
+    const res = await openDispute(orderId, reason.trim());
     setBusy(false);
-    if (error) setErr(error.message);
+    if (res?.error) setErr(res.error);
     else router.refresh();
   }
 

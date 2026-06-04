@@ -2,31 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { toggleFavorite } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { Heart } from "@/components/icons";
 
 // Зар хадгалах (favorites). RLS зөвхөн өөрийн мөрийг зөвшөөрнө.
 export default function FavoriteButton({ listingId, initialFavorited }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [fav, setFav] = useState(Boolean(initialFavorited));
   const [busy, setBusy] = useState(false);
 
   async function toggle() {
     setBusy(true);
-    if (fav) {
-      await supabase.from("favorites").delete().eq("listing_id", listingId);
-      setFav(false);
-    } else {
-      const { data: uid } = await supabase.rpc("current_user_id");
-      if (uid) {
-        const { error } = await supabase
-          .from("favorites")
-          .insert({ user_id: uid, listing_id: listingId });
-        if (!error) setFav(true);
-      }
+    const r = await toggleFavorite(listingId);
+    if (!r.error) {
+      setFav(r.favorited);
     }
     setBusy(false);
     router.refresh();

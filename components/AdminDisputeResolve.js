@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { adminResolveDispute } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { ClipboardCheck } from "@/components/icons";
 
-// Build Plan 2.1: маргаан шийдвэрлэх (admin_resolve_dispute RPC — мөр + тэмдэглэл + audit).
+// Build Plan 2.1: маргаан шийдвэрлэх (adminResolveDispute action — мөр + тэмдэглэл + audit).
 export default function AdminDisputeResolve({ disputeId }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -18,13 +17,9 @@ export default function AdminDisputeResolve({ disputeId }) {
   async function resolve(outcome) {
     setBusy(true);
     setErr(null);
-    const { error } = await supabase.rpc("admin_resolve_dispute", {
-      p_dispute_id: disputeId,
-      p_outcome: outcome,
-      p_note: note.trim() || null,
-    });
+    const res = await adminResolveDispute(disputeId, outcome, note.trim() || null);
     setBusy(false);
-    if (error) setErr(error.message);
+    if (res?.error) setErr(res.error);
     else router.refresh();
   }
 

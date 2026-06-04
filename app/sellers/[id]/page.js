@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
-import { listingImageUrl } from "@/lib/supabase/storage";
+import { isDbConfigured } from "@/lib/db";
+import { getPublicProfile, getSellerActiveListings, getSellerReviews } from "@/lib/queries";
 import { formatDateTime } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import ListingCard from "@/components/ListingCard";
@@ -10,32 +9,16 @@ import { BadgeCheck, Star } from "@/components/icons";
 export const dynamic = "force-dynamic";
 
 export default async function SellerPage({ params }) {
-  if (!isSupabaseConfigured) redirect("/");
+  if (!isDbConfigured) redirect("/");
   const { id } = await params;
-  const supabase = await createClient();
   const t = await getT();
 
-  const { data: seller } = await supabase
-    .from("public_profiles")
-    .select("id, display_name, avatar_url, is_verified, rating_avg, trades_count, created_at")
-    .eq("id", id)
-    .maybeSingle();
+  const seller = await getPublicProfile(id);
   if (!seller) notFound();
 
-  const [{ data: listings }, { data: reviews }] = await Promise.all([
-    supabase
-      .from("listings")
-      .select("id, title, price, server, rank, seller_id, listing_images(storage_path, sort_order)")
-      .eq("seller_id", id)
-      .eq("status", "active")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("reviews")
-      .select("id, stars, comment, created_at")
-      .eq("seller_id", id)
-      .order("created_at", { ascending: false })
-      .limit(10),
+  const [listings, reviews] = await Promise.all([
+    getSellerActiveListings(id),
+    getSellerReviews(id, 10),
   ]);
 
   return (
@@ -68,17 +51,14 @@ export default async function SellerPage({ params }) {
           <p className="text-sm text-slate-400">{t("seller.noListings")}</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {listings.map((l) => {
-              const img = (l.listing_images ?? []).sort((a, b) => a.sort_order - b.sort_order)[0];
-              return (
-                <ListingCard
-                  key={l.id}
-                  listing={l}
-                  seller={seller}
-                  imageUrl={listingImageUrl(img?.storage_path)}
-                />
-              );
-            })}
+            {listings.map((l) => (
+              <ListingCard
+                key={l.id}
+                listing={l}
+                seller={seller}
+                imageUrl={l.imageUrl}
+              />
+            ))}
           </div>
         )}
       </section>

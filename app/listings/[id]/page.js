@@ -1,9 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
+import { isDbConfigured } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { listingImageUrl } from "@/lib/supabase/storage";
+import { getListingById, getPublicProfile, getSellerReviews, isFavorited } from "@/lib/queries";
 import { formatMNT, formatDateTime } from "@/lib/format";
 import { PLATFORM_FEE_RATE } from "@/lib/constants";
 import { getT } from "@/lib/i18n/server";
@@ -15,45 +14,23 @@ import { ImageIcon, BadgeCheck, Star, ShieldCheck } from "@/components/icons";
 export const dynamic = "force-dynamic";
 
 export default async function ListingDetail({ params }) {
-  if (!isSupabaseConfigured) redirect("/");
+  if (!isDbConfigured) redirect("/");
   const { id } = await params;
-  const supabase = await createClient();
   const t = await getT();
 
-  const { data: listing } = await supabase
-    .from("listings")
-    .select("*, listing_images(storage_path, sort_order)")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .maybeSingle();
+  const listing = await getListingById(id);
   if (!listing) notFound();
 
-  const { data: seller } = await supabase
-    .from("public_profiles")
-    .select("id, display_name, is_verified, rating_avg, trades_count")
-    .eq("id", listing.seller_id)
-    .maybeSingle();
+  const seller = await getPublicProfile(listing.seller_id);
 
-  const { data: reviews } = await supabase
-    .from("reviews")
-    .select("id, stars, comment, created_at")
-    .eq("seller_id", listing.seller_id)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const reviews = await getSellerReviews(listing.seller_id, 5);
 
   const { user, profile } = await getCurrentUser();
   const isOwner = profile?.id === listing.seller_id;
 
-  let favorited = false;
-  if (user && !isOwner) {
-    const { data: f } = await supabase
-      .from("favorites")
-      .select("listing_id")
-      .eq("listing_id", id)
-      .maybeSingle();
-    favorited = Boolean(f);
-  }
-  const images = (listing.listing_images ?? []).sort((a, b) => a.sort_order - b.sort_order);
+  const favorited = user && !isOwner ? await isFavorited(profile.id, id) : false;
+
+  const images = listing.images ?? [];
   const fee = Math.round(listing.price * PLATFORM_FEE_RATE);
 
   return (
@@ -66,8 +43,8 @@ export default async function ListingDetail({ params }) {
           {images.map((img) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              key={img.storage_path}
-              src={listingImageUrl(img.storage_path)}
+              key={img.url}
+              src={img.url}
               alt={listing.title}
               className="h-56 w-auto rounded-lg border border-slate-200 object-cover"
             />

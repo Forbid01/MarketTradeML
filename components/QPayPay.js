@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createQpayInvoice } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { RefreshCw } from "@/components/icons";
 
 // Build Plan 3.4: QPay-ээр төлөх. create-invoice Edge Function-ийг дуудаж QR/deeplink харуулна.
 export default function QPayPay({ orderId }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [inv, setInv] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -18,15 +17,13 @@ export default function QPayPay({ orderId }) {
   async function pay() {
     setBusy(true);
     setErr(null);
-    const { data, error } = await supabase.functions.invoke("create-invoice", {
-      body: { order_id: orderId },
-    });
+    const r = await createQpayInvoice(orderId);
     setBusy(false);
-    if (error || data?.error) {
-      setErr(error?.message ?? data?.error ?? t("qpay.err"));
+    if (r.error) {
+      setErr(r.error ?? t("qpay.err"));
       return;
     }
-    setInv(data);
+    setInv(r.invoice);
   }
 
   if (inv) {

@@ -1,39 +1,27 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { sendMessage, getOrderMessages } from "@/lib/actions";
 import { formatDateTime } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 
-// Build Plan 1.12: захиалга тус бүрийн чат — Realtime + visibilitychange REST refetch
-// (iOS Safari WebSocket тасралтыг нөхөх heartbeat).
+// Build Plan 1.12: захиалга тус бүрийн чат — 5с тутамд polling + visibilitychange refetch.
 export default function OrderChat({ orderId, myUserId, initialMessages }) {
   const t = useT();
-  const supabase = useRef(createClient()).current;
   const [messages, setMessages] = useState(initialMessages ?? []);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
   const bottomRef = useRef(null);
 
-  async function load() {
-    const { data } = await supabase
-      .from("messages")
-      .select("id, sender_id, body, created_at")
-      .eq("order_id", orderId)
-      .order("created_at", { ascending: true });
-    if (data) setMessages(data);
-  }
-
   useEffect(() => {
-    const channel = supabase
-      .channel(`messages:${orderId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `order_id=eq.${orderId}` },
-        (payload) =>
-          setMessages((m) => (m.some((x) => x.id === payload.new.id) ? m : [...m, payload.new]))
-      )
-      .subscribe();
+    let cancelled = false;
+
+    async function load() {
+      const r = await getOrderMessages(orderId);
+      if (!cancelled && r.ok) setMessages(r.messages);
+    }
+
+    const id = setInterval(load, 5000);
 
     const onVis = () => {
       if (document.visibilityState === "visible") load();
@@ -41,7 +29,8 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      clearInterval(id);
       document.removeEventListener("visibilitychange", onVis);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -57,14 +46,10 @@ export default function OrderChat({ orderId, myUserId, initialMessages }) {
     if (!text) return;
     setBusy(true);
     setBody("");
-    const { data, error } = await supabase
-      .from("messages")
-      .insert({ order_id: orderId, sender_id: myUserId, body: text })
-      .select("id, sender_id, body, created_at")
-      .single();
+    const r = await sendMessage(orderId, text);
     setBusy(false);
-    if (error) setBody(text);
-    else setMessages((m) => (m.some((x) => x.id === data.id) ? m : [...m, data]));
+    if (r.error) setBody(text);
+    else setMessages((m) => (m.some((x) => x.id === r.message.id) ? m : [...m, r.message]));
   }
 
   return (

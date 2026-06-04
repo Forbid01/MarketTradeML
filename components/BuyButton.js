@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createOrder } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 
 export default function BuyButton({ listingId }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -15,14 +14,13 @@ export default function BuyButton({ listingId }) {
   async function buy() {
     setBusy(true);
     setErr(null);
-    const { data, error } = await supabase.rpc("order_create", { p_listing_id: listingId });
-    if (error) {
-      setErr(error.message);
+    const r = await createOrder(listingId);
+    if (r.error) {
+      setErr(r.error);
       setBusy(false);
       return;
     }
-    const row = Array.isArray(data) ? data[0] : data;
-    router.push(`/orders/${row.id}`);
+    router.push(`/orders/${r.orderId}`);
     router.refresh();
   }
 

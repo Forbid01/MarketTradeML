@@ -2,19 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { markAllRead } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { Check } from "@/components/icons";
 
 export default function MarkAllRead() {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [busy, setBusy] = useState(false);
 
   async function mark() {
     setBusy(true);
-    await supabase.from("notifications").update({ is_read: true }).eq("is_read", false);
+    await markAllRead();
     setBusy(false);
     router.refresh();
   }

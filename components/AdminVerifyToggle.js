@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { adminSetVerified } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { BadgeCheck } from "@/components/icons";
 
 // Build Plan 2.1: зарагчийн баталгаажсан тэмдгийг олгох/буцаах (admin_set_verified RPC).
 export default function AdminVerifyToggle({ userId, isVerified }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -17,12 +16,9 @@ export default function AdminVerifyToggle({ userId, isVerified }) {
   async function toggle() {
     setBusy(true);
     setErr(null);
-    const { error } = await supabase.rpc("admin_set_verified", {
-      p_user_id: userId,
-      p_verified: !isVerified,
-    });
+    const res = await adminSetVerified(userId, !isVerified);
     setBusy(false);
-    if (error) setErr(error.message);
+    if (res?.error) setErr(res.error);
     else router.refresh();
   }
 

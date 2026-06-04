@@ -1,6 +1,14 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
+import {
+  getOrderForParty,
+  getChecklist,
+  getLatestDispute,
+  getMessages,
+  getReviewForOrder,
+  getProfileVerified,
+} from "@/lib/queries";
 import { ORDER_STATUS } from "@/lib/constants";
 import { formatMNT, formatDateTime, timeLeft } from "@/lib/format";
 import { getT, getLocale } from "@/lib/i18n/server";
@@ -21,36 +29,25 @@ export const dynamic = "force-dynamic";
 
 export default async function OrderDetail({ params }) {
   const { id } = await params;
-  const { user, profile, supabase } = await getCurrentUser();
-  if (!user) redirect(`/login?next=/orders/${id}`);
+  const { user, profile } = await getCurrentUser();
+  if (!user || !profile) redirect(`/login?next=/orders/${id}`);
 
-  const { data: order } = await supabase
-    .from("orders")
-    .select("*, listings(title, seller_id)")
-    .eq("id", id)
-    .maybeSingle();
+  const isAdmin = profile?.role === "admin";
+  const order = await getOrderForParty(id, profile?.id, isAdmin);
   if (!order) notFound();
 
   const isBuyer = profile?.id === order.buyer_id;
   const isSeller = profile?.id === order.seller_id;
-  const isAdmin = profile?.role === "admin";
-  if (!isBuyer && !isSeller && !isAdmin) notFound();
 
   const t = await getT();
   const locale = await getLocale();
 
-  const [
-    { data: checklist },
-    { data: dispute },
-    { data: messages },
-    { data: review },
-    { data: sellerProfile },
-  ] = await Promise.all([
-    supabase.from("transfer_checklist").select("*").eq("order_id", id).maybeSingle(),
-    supabase.from("disputes").select("*").eq("order_id", id).order("created_at", { ascending: false }).maybeSingle(),
-    supabase.from("messages").select("id, sender_id, body, created_at").eq("order_id", id).order("created_at", { ascending: true }),
-    supabase.from("reviews").select("id, stars, comment").eq("order_id", id).maybeSingle(),
-    supabase.from("public_profiles").select("id, is_verified").eq("id", order.seller_id).maybeSingle(),
+  const [checklist, dispute, messages, review, sellerProfile] = await Promise.all([
+    getChecklist(id, profile.id, isAdmin),
+    getLatestDispute(id, profile.id, isAdmin),
+    getMessages(id, profile.id, isAdmin),
+    getReviewForOrder(id, profile.id, isAdmin),
+    getProfileVerified(order.seller_id),
   ]);
 
   const tone = ORDER_STATUS[order.status]?.tone ?? "zinc";
@@ -68,7 +65,7 @@ export default async function OrderDetail({ params }) {
       <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-lg font-bold text-slate-900">{order.listings?.title ?? "—"}</h1>
+            <h1 className="text-lg font-bold text-slate-900">{order.listing_title ?? "—"}</h1>
             <p className="mt-1 text-xs text-slate-400">
               {isBuyer ? t("order.buyer") : isSeller ? t("order.seller") : t("order.admin")} · {formatDateTime(order.created_at, locale)}
             </p>
@@ -142,7 +139,7 @@ export default async function OrderDetail({ params }) {
             {review.comment && <p className="mt-1 text-slate-600">{review.comment}</p>}
           </div>
         ) : isBuyer ? (
-          <ReviewForm orderId={order.id} sellerId={order.seller_id} reviewerId={profile.id} />
+          <ReviewForm orderId={order.id} />
         ) : null
       )}
 

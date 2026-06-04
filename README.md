@@ -4,84 +4,79 @@ Mobile Legends аккаунтыг **escrow ба итгэлцлийн хамга�
 Facebook group-ийн scam-тай орчныг зохион байгуулалттай, итгэлцэлд суурилсан болгох зорилготой.
 
 > 📐 Архитектур: [MLBB_Marketplace_Architecture.md](MLBB_Marketplace_Architecture.md) ·
-> 🗺 Бүтээх төлөвлөгөө: [MLBB_Marketplace_Build_Plan.md](MLBB_Marketplace_Build_Plan.md) ·
-> 🛠 Supabase тохиргоо: [supabase/README.md](supabase/README.md)
+> 🗺 Бүтээх төлөвлөгөө: [MLBB_Marketplace_Build_Plan.md](MLBB_Marketplace_Build_Plan.md)
 
-## Технологи
+## Технологи (Vercel-төвт)
 - **Frontend**: Next.js 16 (App Router, **JavaScript**), React 19, Tailwind v4, PWA
-- **Backend**: Supabase (Postgres + Auth + Storage + Realtime + Edge Functions)
-- **Төлбөр**: QPay v2 (OAuth2, invoice/QR, webhook) — Edge Functions
-- **Hosting**: Vercel (арилжаанд Pro)
+- **DB**: Neon (serverless Postgres) — escrow логик Postgres функцэд
+- **Auth**: Auth.js (NextAuth v5) — Google + и-мэйл 6 оронтой код (Resend)
+- **Storage**: Vercel Blob (зарын зураг)
+- **Төлбөр**: QPay v2 — Next.js API route (`/api/qpay/callback`)
+- **Cron**: Vercel Cron (`/api/cron`) — 48ц sweep + QPay reconcile
+- **Hosting**: Vercel
 
 ## Гол зарчим
 1. **PWA эхэлнэ** — app store-ийн аккаунт зарах хоригийг тойрно.
-2. **Гар escrow** — мөнгийг өөрөө барина (хуулийн эрсдэл бага). DB зөвхөн төлөв хөтөлнө.
+2. **Гар escrow** — мөнгийг өөрөө барина. DB зөвхөн төлөв хөтөлнө.
 3. **Итгэлцэл = бүтээгдэхүүн** — review, баталгаажсан тэмдэг, шилжүүлгийн шалгах жагсаалт.
-4. Бизнес логик **Edge Functions + Postgres функц**-д; мөнгө/төлөв зөвхөн тэндүүр.
+4. RLS байхгүй — эрхийн шалгалт **серверийн давхаргад** ([lib/actions.js](lib/actions.js),
+   [lib/queries.js](lib/queries.js)); мөнгө/төлөвийн шилжилт зөвхөн `actor_id`-тэй Postgres функцээр.
 
 ## Хурдан эхлэх
 ```bash
-# 1) Хамаарал
 npm install
+cp .env.local.example .env.local      # DATABASE_URL, AUTH_SECRET, AUTH_GOOGLE_*, RESEND_API_KEY ...
 
-# 2) Орчны хувьсагч
-cp .env.local.example .env.local   # Supabase URL + anon key бөглө
+# Neon DB schema ачаалах
+psql "$DATABASE_URL" -f db/schema.sql
 
-# 3) Database (supabase/README.md үзнэ үү)
-npx supabase link --project-ref <REF>
-npx supabase db push
-
-# 4) Ажиллуулах
-npm run dev        # http://localhost:3000
+npm run dev                            # http://localhost:3000
 ```
-> Supabase тохируулаагүй ч апп ажиллаж, нүүр хуудсанд тохиргооны заавар харуулна.
+> DB тохируулаагүй ч апп ажиллаж, browse дээр тохиргооны заавар харуулна. RESEND_API_KEY
+> хоосон бол и-мэйл код **консолд** хэвлэгдэнэ (dev).
+
+### Орчны хувьсагч
+`DATABASE_URL` (Neon) · `AUTH_SECRET` · `AUTH_GOOGLE_ID/SECRET` · `RESEND_API_KEY` `EMAIL_FROM` ·
+`BLOB_READ_WRITE_TOKEN` (Vercel Blob) · `NEXT_PUBLIC_SITE_URL` · QPay: `QPAY_BASE_URL`
+`QPAY_CLIENT_ID/SECRET` `QPAY_INVOICE_CODE` `QPAY_CALLBACK_TOKEN` · `CRON_SECRET`. Жагсаалт:
+[.env.local.example](.env.local.example).
 
 ## Escrow төлөвийн урсгал
 ```
-created ─QPay paid─▶ paid ─зарагч─▶ transferring ─худ.авагч нэвтрэв─▶ inspecting ─48ц/баталгаажуулав─▶ completed
-   │                                      │                               │
- cancelled                            disputed ◀──────────────────────────┘  (refunded / completed — админ)
+created ─QPay paid─▶ paid ─зарагч─▶ transferring ─худ.авагч─▶ inspecting ─48ц/checklist─▶ completed
+   │                                      │                            │
+ cancelled                            disputed ◀───────────────────────┘  (refunded / completed — админ)
 ```
-- Шилжилт бүр атомик `order_transition()` (FOR UPDATE + матриц) дотор.
-- QPay төлбөр `payment_id` түвшинд idempotent (`confirm_payment`).
-- Дүн зөрвөл автоматаар `disputed`.
+- Шилжилт бүр атомик `order_transition(order, target, actor)` дотор (FOR UPDATE + матриц).
+- `inspecting → completed` нь **checklist бүрэн** үед л (буцааж авах scam-аас сэргийлнэ).
+- QPay төлбөр `payment_id` түвшинд idempotent, **нийт дүнгээр** баталгаажна (`confirm_payment`).
 
 ## Бүтэц
 ```
-app/                    # Next.js App Router (route бүр)
-  page.js               # нүүр: зар grid + хайлт/шүүлт
-  listings/new          # зар нэмэх (зураг WebP шахалт)
-  listings/[id]         # зарын дэлгэрэнгүй + худалдаж авах
-  orders, orders/[id]   # захиалга + escrow UI (checklist/чат/маргаан/review/QPay)
-  admin                 # админ worklist
-  notifications         # мэдэгдэл
-  login, account, auth/ # нэвтрэлт
-components/             # UI (EscrowActions, TransferChecklist, OrderChat, ...)
-lib/                    # supabase client/server/proxy, constants, format, auth
-proxy.js                # Next 16 Proxy — Supabase session refresh
-supabase/migrations/    # 0001–0009 SQL (schema, RLS, функц, QPay)
-supabase/functions/     # Edge Functions (create-invoice, qpay-callback, qpay-reconcile)
+app/                  # Next.js App Router (хуудас бүр server component)
+  api/auth/[...nextauth]   # Auth.js handler
+  api/qpay/callback        # QPay webhook (token + payment/check)
+  api/cron                 # Vercel Cron: sweep + reconcile (CRON_SECRET)
+  listings, orders, admin, account, notifications, favorites, login
+auth.js               # Auth.js (NextAuth v5) тохиргоо
+lib/db.js             # Neon client (query/queryOne/withTx)
+lib/queries.js        # серверийн УНШИХ функцууд (эрх шалгалттай)
+lib/actions.js        # серверийн БИЧИХ үйлдлүүд ("use server")
+lib/auth.js           # getCurrentUser (session) ; lib/auth/{otp,users}.js
+lib/qpay.js           # QPay v2 REST wrapper ; lib/blob.js — Vercel Blob
+components/           # UI (EscrowActions, TransferChecklist, OrderChat, ...)
+db/schema.sql         # Neon schema (хүснэгт, функц, trigger, index)
 ```
 
 ## Аюулгүй байдал (товч)
-- **RLS** бүх хүснэгтэд; хэрэглэгч зөвхөн өөрийн өгөгдөл; админ `is_admin()` нь **JWT app_metadata**-аас (recursion-гүй).
-- Утас зэрэг хувийн талбарыг `public_profiles` view-ээр нуудаг.
-- Нэвтрэх мэдээллийг **шифрлэж** (`credentials_handoff` / private bucket) — plain text БИШ.
-- `service_role` key зөвхөн server/Edge талд.
+- Эрхийн шалгалт серверийн action/query бүрт (RLS-ийн оронд); escrow функц `actor_id`-аар.
+- `DATABASE_URL` зөвхөн сервер тал; и-мэйл OTP код hash-лагдаж, TTL + оролдлогын хязгаартай.
+- Утас/хувийн талбарыг `public_profiles` view-ээр нуудаг.
+- QPay callback `?token` + сервер-сервер баталгаажуулалт; reconcile `CRON_SECRET`.
 
-## Хэрэгжилтийн төлөв
-| Phase | Агуулга | Төлөв |
-|---|---|---|
-| 1 | Итгэлцлийн цөмтэй MVP (escrow, checklist, чат, маргаан, review, RLS) | ✅ код |
-| 2 | audit_log, DB guard, notifications, админ RPC + UI | ✅ код |
-| 3 | QPay автомат төлбөр (idempotent, сервер-сервер баталгаажуулалт) | ✅ код |
-| 4 | Автомат payout, KYC, тэлэлт — голдуу ops/хууль | ⏳ |
-
-> ⚠ Код нь Supabase/QPay-ийн баримтжуулсан загварт нийцүүлж бичсэн ч **амьд орчинд
-> туршаагүй**. Эхлээд sandbox/dev дээр escrow урсгал + RLS-ийг рол бүрээр шалгана уу.
-
-## Deploy
-- **Vercel**: project import → env var-уудыг тохируул (`NEXT_PUBLIC_SUPABASE_*`). Арилжаанд **Pro**.
-- **Supabase**: `db push` + `functions deploy` (`verify_jwt` нь `config.toml`-д тохируулагдсан) +
-  Edge secrets (`QPAY_*`, `CRON_SECRET`, `APP_ORIGIN`) + pg_cron (`inspection-sweep`, `qpay-reconcile`).
-  Дэлгэрэнгүй: [supabase/README.md](supabase/README.md).
+## Deploy (Vercel)
+1. **Neon**: project → `DATABASE_URL` → `psql "$DATABASE_URL" -f db/schema.sql`.
+2. **Vercel**: import repo → Env vars (дээрх жагсаалт) → **Vercel Blob** холбох → deploy.
+3. **Auth.js**: Google OAuth redirect `https://<домэйн>/api/auth/callback/google`.
+4. **Cron**: [vercel.json](vercel.json)-д `/api/cron` 5 мин тутам (CRON_SECRET-ээр хамгаалагдсан).
+5. **Админ эрх**: `update public.users set role='admin' where email='...';`

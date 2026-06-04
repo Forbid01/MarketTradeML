@@ -2,15 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { submitReview } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { Star } from "@/components/icons";
 
 // Build Plan 1.14: review — зөвхөн 'completed' захиалгад худалдан авагч өгнө.
 // rating_avg/trades_count-г DB trigger тооцоолно.
-export default function ReviewForm({ orderId, sellerId, reviewerId }) {
+export default function ReviewForm({ orderId }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
@@ -21,15 +20,9 @@ export default function ReviewForm({ orderId, sellerId, reviewerId }) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-    const { error } = await supabase.from("reviews").insert({
-      order_id: orderId,
-      seller_id: sellerId,
-      reviewer_id: reviewerId,
-      stars,
-      comment: comment.trim() || null,
-    });
+    const res = await submitReview(orderId, stars, comment.trim() || null);
     setBusy(false);
-    if (error) setErr(error.message);
+    if (res?.error) setErr(res.error);
     else router.refresh();
   }
 

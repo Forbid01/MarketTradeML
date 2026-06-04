@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { adminRecordPayout } from "@/lib/actions";
 import { formatMNT } from "@/lib/format";
 import { useT } from "@/lib/i18n/client";
 
-// Build Plan 2.6: гар payout бүртгэх (admin_record_payout RPC).
+// Build Plan 2.6: гар payout бүртгэх (adminRecordPayout server action).
 export default function AdminPayoutForm({ orderId, netAmount }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [form, setForm] = useState({ method: "bank", bank_account: "", ref: "" });
   const [busy, setBusy] = useState(false);
@@ -19,14 +18,14 @@ export default function AdminPayoutForm({ orderId, netAmount }) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-    const { error } = await supabase.rpc("admin_record_payout", {
-      p_order_id: orderId,
-      p_method: form.method,
-      p_bank_account: form.bank_account.trim() || null,
-      p_external_txn_ref: form.ref.trim() || null,
-    });
+    const res = await adminRecordPayout(
+      orderId,
+      form.method,
+      form.bank_account.trim() || null,
+      form.ref.trim() || null
+    );
     setBusy(false);
-    if (error) setErr(error.message);
+    if (res?.error) setErr(res.error);
     else router.refresh();
   }
 

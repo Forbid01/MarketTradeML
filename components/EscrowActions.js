@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { transitionOrder } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 
-// Build Plan 1.10: escrow төлөв шилжилтийг order_transition RPC-ээр (атомик, FOR UPDATE).
+// Build Plan 1.10: escrow төлөв шилжилтийг transitionOrder server action-аар (атомик, FOR UPDATE).
 export default function EscrowActions({ orderId, status, isBuyer, isSeller, isAdmin }) {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -16,12 +15,9 @@ export default function EscrowActions({ orderId, status, isBuyer, isSeller, isAd
   async function act(target) {
     setBusy(true);
     setErr(null);
-    const { error } = await supabase.rpc("order_transition", {
-      p_order_id: orderId,
-      p_target: target,
-    });
+    const res = await transitionOrder(orderId, target);
     setBusy(false);
-    if (error) setErr(error.message);
+    if (res?.error) setErr(res.error);
     else router.refresh();
   }
 

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
+import { listNotifications } from "@/lib/queries";
 import { formatDateTime } from "@/lib/format";
 import { getT } from "@/lib/i18n/server";
 import MarkAllRead from "@/components/MarkAllRead";
@@ -8,15 +9,11 @@ import MarkAllRead from "@/components/MarkAllRead";
 export const dynamic = "force-dynamic";
 
 export default async function NotificationsPage() {
-  const { user, supabase } = await getCurrentUser();
-  if (!user) redirect("/login?next=/notifications");
+  const { user, profile } = await getCurrentUser();
+  if (!user || !profile) redirect("/login?next=/notifications");
   const t = await getT();
 
-  const { data: notifs } = await supabase
-    .from("notifications")
-    .select("id, type, title, body, order_id, is_read, created_at")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const notifs = await listNotifications(profile.id);
 
   return (
     <div className="mx-auto max-w-lg space-y-4">

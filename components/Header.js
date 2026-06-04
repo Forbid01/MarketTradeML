@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { isSupabaseConfigured } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { getUnreadCount } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import MobileMenu from "@/components/MobileMenu";
@@ -8,31 +8,10 @@ import { Logo, Bell, Heart, BadgeCheck, Plus } from "@/components/icons";
 
 export default async function Header() {
   const t = await getT();
-  let profile = null;
-  let authed = false;
-  let unread = 0;
-
-  if (isSupabaseConfigured) {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    authed = Boolean(user);
-    if (user) {
-      const { data } = await supabase
-        .from("users")
-        .select("display_name, role, is_verified")
-        .eq("auth_id", user.id)
-        .maybeSingle();
-      profile = data;
-
-      const { count } = await supabase
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .eq("is_read", false);
-      unread = count ?? 0;
-    }
-  }
+  const { profile } = await getCurrentUser();
+  // profile-ээр guard (JWT session нь DB мөрөөс удаан амьдарч болзошгүй → profile null үед crash-аас сэргийлнэ)
+  const authed = Boolean(profile);
+  const unread = profile ? await getUnreadCount(profile.id) : 0;
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur">

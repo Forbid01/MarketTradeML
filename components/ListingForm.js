@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createListing, addListingImage } from "@/lib/actions";
 import { RANKS, SERVERS } from "@/lib/constants";
 import { listingSchema } from "@/lib/validation";
 import { compressImage } from "@/lib/image";
@@ -11,7 +11,6 @@ import { ImageIcon } from "@/components/icons";
 
 export default function ListingForm() {
   const router = useRouter();
-  const supabase = createClient();
   const t = useT();
 
   const [form, setForm] = useState({
@@ -36,9 +35,6 @@ export default function ListingForm() {
     setBusy(true);
     setErr(null);
     try {
-      const { data: sellerId, error: idErr } = await supabase.rpc("current_user_id");
-      if (idErr || !sellerId) throw new Error(t("listingForm.errAuth"));
-
       const price = parseInt(form.price, 10);
       if (!Number.isFinite(price) || price <= 0) throw new Error(t("listingForm.errPrice"));
       if (form.title.trim().length < 3) throw new Error(t("listingForm.errTitle"));
@@ -75,28 +71,21 @@ export default function ListingForm() {
         );
       }
 
-      const { data: listing, error } = await supabase
-        .from("listings")
-        .insert({ seller_id: sellerId, ...parsed.data })
-        .select("id")
-        .single();
-      if (error) throw error;
+      const r = await createListing(parsed.data);
+      if (r.error) throw new Error(r.error);
 
-      let order = 0;
-      for (const file of files) {
-        const blob = await compressImage(file);
-        const path = `${listing.id}/${crypto.randomUUID()}.webp`;
-        const { error: upErr } = await supabase.storage
-          .from("listing-images")
-          .upload(path, blob, { contentType: "image/webp", upsert: false });
-        if (upErr) throw upErr;
-        const { error: imgErr } = await supabase
-          .from("listing_images")
-          .insert({ listing_id: listing.id, storage_path: path, sort_order: order++ });
-        if (imgErr) throw imgErr;
+      for (let i = 0; i < files.length; i++) {
+        const blob = await compressImage(files[i]);
+        // Шахалт амжилтгүй (HEIC г.м) → эх том файл буцаж болзошгүй; 1MB server-action лимитээс хэтрэхээс сэргийлнэ.
+        if (blob.size > 7_000_000) throw new Error(t("listingForm.errImageSize"));
+        const fd = new FormData();
+        fd.append("file", blob);
+        fd.append("sort", String(i));
+        const imgRes = await addListingImage(r.id, fd);
+        if (imgRes.error) throw new Error(imgRes.error);
       }
 
-      router.push(`/listings/${listing.id}`);
+      router.push(`/listings/${r.id}`);
       router.refresh();
     } catch (e) {
       setErr(e.message ?? String(e));
