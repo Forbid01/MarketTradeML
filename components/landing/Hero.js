@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n/client";
 import HeroShowcase from "@/components/landing/HeroShowcase";
+import { register, prefersReducedMotion } from "@/components/landing/scrollManager";
 import { ArrowRight, Lock, BadgeCheck } from "@/components/icons";
 
 const BARS = [["Level", "82%"], ["Heroes", "68%"], ["Skins", "45%"], ["Win", "58%"]];
@@ -13,6 +14,16 @@ export default function Hero() {
   const t = useT();
   const wrapRef = useRef(null);
   const stageRef = useRef(null);
+  const artRef = useRef(null);
+
+  // Гүйлгэх үед art stage-ийг зөөлөн parallax-аар хөдөлгөнө (гүн)
+  useEffect(() => {
+    const el = artRef.current;
+    if (!el || prefersReducedMotion()) return;
+    return register(el, (p) => {
+      el.style.transform = `translate3d(0, ${((p - 0.5) * -54).toFixed(2)}px, 0)`;
+    });
+  }, []);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -99,7 +110,7 @@ export default function Hero() {
         </div>
 
         {/* Warrior stage */}
-        <div className="relative mx-auto flex h-[460px] w-full max-w-sm items-center justify-center">
+        <div ref={artRef} style={{ willChange: "transform" }} className="relative mx-auto flex h-[460px] w-full max-w-sm items-center justify-center">
           {/* rotating dashed ring */}
           <div aria-hidden className="absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-white/10 motion-safe:animate-[spinSlow_34s_linear_infinite]" />
           {/* conic protection ring */}

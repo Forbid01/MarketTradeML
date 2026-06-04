@@ -3,7 +3,9 @@
 import { useEffect, useRef } from "react";
 
 // Scroll-reveal: viewport-д орохд .in нэмж globals.css дахь .reveal-г идэвхжүүлнэ.
-export default function Reveal({ children, delay = 0, className = "" }) {
+// variant: up | down | left | right | scale | blur — орж ирэх чиглэл/маяг.
+// delay: stagger (ms). once=false бол гарахад дахин нуугдаж, дахин харагдана.
+export default function Reveal({ children, delay = 0, variant = "up", once = true, className = "" }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -14,18 +16,20 @@ export default function Reveal({ children, delay = 0, className = "" }) {
         for (const e of entries) {
           if (e.isIntersecting) {
             el.classList.add("in");
-            io.unobserve(el);
+            if (once) io.unobserve(el);
+          } else if (!once) {
+            el.classList.remove("in");
           }
         }
       },
-      { threshold: 0.18 }
+      { threshold: 0.18, rootMargin: "0px 0px -8% 0px" }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [once]);
 
   return (
-    <div ref={ref} className={`reveal ${className}`} style={{ "--reveal-delay": `${delay}ms` }}>
+    <div ref={ref} data-v={variant} className={`reveal ${className}`} style={{ "--reveal-delay": `${delay}ms` }}>
       {children}
     </div>
   );
