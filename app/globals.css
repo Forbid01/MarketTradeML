@@ -69,6 +69,20 @@ body {
   50% { transform: scale(1.07) translateY(-6px); }
 }
 
+/* ─── Landing Phase 1: preloader intro / trust marquee / section dots ─── */
+@keyframes preloaderOut { to { opacity: 0; transform: translateY(-2.5%); visibility: hidden; } }
+@keyframes preloaderBar { 0% { transform: scaleX(0); } 100% { transform: scaleX(1); } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes dotPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(56,189,248,0.5); }
+  50% { box-shadow: 0 0 12px 3px rgba(56,189,248,0.16); }
+}
+.preloader { position: fixed; inset: 0; z-index: 90; background: var(--background); }
+.preloader--out { animation: preloaderOut 0.7s cubic-bezier(0.7,0,0.3,1) forwards; }
+/* marquee-track нь контентоо 2 хувилж рендэрдэг тул -50% = нэг хувилбарын урт (тасралтгүй давталт) */
+.marquee-track { animation: marquee 34s linear infinite; }
+.marquee-track:hover { animation-play-state: paused; }
+
 /* ─────────────────────────── Page transition ─────────────────────────── */
 /* template.js нь навигаци бүрт remount хийдэг тул энэ нэг удаагийн animation дахин тоглоно. */
 .page-enter {
@@ -135,7 +149,10 @@ body {
   .page-enter { animation: none !important; }
   .fx-layer { display: none !important; }
   .text-mythic { animation: none !important; }
+  .marquee-track { animation: none !important; }
+  .preloader--out { animation: none !important; }
 }
 @media (scripting: none) {
   .reveal { opacity: 1 !important; transform: none !important; }
+  .preloader { display: none !important; }
 }

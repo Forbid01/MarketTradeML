@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/client";
 import { formatMNT } from "@/lib/format";
 import { createBoostOrder } from "@/lib/actions";
-import { BOOST, RANK_LADDER, rankMatches, boostTotal } from "@/lib/boost";
+import { BOOST, RANK_LADDER, rankMatches, boostTotal, bulkDiscount } from "@/lib/boost";
 import { Star, ShieldCheck, RefreshCw, ArrowRight, BadgeCheck, Target, GraduationCap } from "@/components/icons";
 
 function Toggle({ on, onClick, children }) {
@@ -67,6 +67,11 @@ function Card({ icon, title, desc, perMatch, matches, total, service, config, un
         <div>
           <div className="text-[10px] uppercase tracking-wide text-slate-500">
             {t("boost.total")} · {matches} {countLabel}
+            {bulkDiscount(matches) > 0 && (
+              <span className="ml-1.5 rounded bg-emerald-500/15 px-1 py-0.5 font-bold text-emerald-300">
+                {t("boost.bulk", { pct: Math.round(bulkDiscount(matches) * 100) })}
+              </span>
+            )}
           </div>
           <div className="bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-2xl font-extrabold text-transparent">
             {formatMNT(total)}

@@ -4,26 +4,25 @@
 захиалга, dark cinematic UI + hero animation, Auth.js (Google + и-мэйл код), admin worklist.
 
 ## 🔐 Итгэлцэл / аюулгүй байдал
-- **Booster профайл + үнэлгээ** — бустинг захиалга дуусахад худалдан авагч boost-г үнэлдэг (одоо review зөвхөн account-д).
-- **Escrow бустингд** — boost төлбөрийг hold хийж, match дууссаны дараа boost-erт олгох (одоогийн created→paid-ийг in_progress→completed болгож, payout нэмэх).
+- ✅ **Booster профайл + үнэлгээ** — boost review + booster-ийн дундаж үнэлгээ захиалгын хуудсанд (Phase 4).
+- ✅ **Escrow бустингд** — payout_status + admin олголт бүртгэх RPC; held → явц → completed → олголт (Phase 4).
 - **KYC / 2FA** админд (TOTP), их дүнтэй худалдаанд баталгаажуулалт.
 - **Маргааны нотолгоо** — чат + зураг + checklist-ийн snapshot-ийг dispute-д хавсаргах.
 
 ## 🛒 Маркетплейс
-- **Хайлт/шүүлт сайжруулах** — үнийн муж, win-rate, скин тоо, "verified only", эрэмбэ.
+- ✅ **Хайлт/шүүлт** — үнийн муж, win-rate, level, "verified only", эрэмбэ, filter chip + skeleton (Phase 2).
 - **Watchlist мэдэгдэл** — хадгалсан зар үнэ буурвал/зарагдвал мэдэгдэх.
 - **Зар сэргээх (bump)** + онцлох зар (paid promotion) — орлогын суваг.
 - **Олон зураг + видео** listing-д; зар засах UI (одоо устгах/нуух л байгаа).
 
 ## ⚔️ Бустинг (skycoach маягаар тэлэх)
 - **Илүү үйлчилгээ**: Placement/Calibration boost, Coaching (цаг тутам), Achievement boost, Hero mastery.
-- **Booster хуваарилалт** — админ/booster захиалга авах самбар, явцын статус (in_progress %, дууссан match).
-- **Live явц** — захиалгын хуудсанд match-ийн прогресс, booster-тэй чат.
-- **Урамшуулал** — олон match дээр хямдрал (bulk discount), promo код.
+- ✅ **Booster хуваарилалт + явцын статус** — booster-д хуваарилах, дууссан match-ийн прогресс bar (Phase 4).
+- **Live явц** — ✅ match прогресс; ⏳ booster↔buyer чат (messages одоо зөвхөн account захиалгад — boost-д өргөтгөх).
+- ✅ **Урамшуулал** — олон match дээр bulk discount (10+→5%, 20+→10%, 40+→15%) + promo код.
 
 ## 📈 Өсөлт / орлого
-- **Referral** систем (урих → бонус).
-- **Loyalty / coin** — арилжаа бүрд оноо.
+- ~~Referral систем / Loyalty оноо~~ — **2026-06-д ХАСАВ** (шаардлагагүй гэж шийдсэн).
 - **SEO**: per-listing metadata + OpenGraph зураг (одоо sitemap/robots нэмсэн).
 - **Олон валют** (₮/$/₽) + ханш.
 
@@ -41,5 +40,6 @@
 - **Hero showcase** — лицензтэй splash-art (`public/heroes/`), per-hero particle theme.
 - **Mobile polish** — bottom-nav, haptics, PWA push notification.
 
-> Дараагийн хамгийн өндөр ач холбогдолтой: (1) бустингийн escrow + booster явц, (2) listing
-> хайлт/мэдэгдэл, (3) email мэдэгдэл + rate-limit. Аль нэгийг хэлвэл хийж эхэлнэ.
+> Дууссан (2026-06): analysis bug-fix-үүд, loyalty/referral хасалт, Landing wow (Phase 1),
+> Browse/ListingCard (Phase 2), Зар нэмэх wizard (Phase 3), Boost escrow + явц (Phase 4).
+> Дараагийн: Orders dashboard (Phase 5), boost чат, email мэдэгдэл өргөтгөх, тест.

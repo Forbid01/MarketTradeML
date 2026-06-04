@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { HEROES } from "@/lib/heroes";
 import { Warrior } from "@/components/Warrior";
+import { useReducedMotion } from "@/lib/hooks";
 import { BadgeCheck } from "@/components/icons";
 
 // Лицензтэй баатрын зургийг 3D coverflow deck-ээр харуулна:
@@ -31,15 +32,13 @@ const cardTransform = (s) =>
 
 export default function HeroShowcase() {
   const [idx, setIdx] = useState(0);
-  const [reduce, setReduce] = useState(false);
+  const reduce = useReducedMotion();
 
   useEffect(() => {
-    const m = window.matchMedia?.("(prefers-reduced-motion: reduce)");
-    setReduce(!!m?.matches);
-    if (HEROES.length < 2 || m?.matches) return;
+    if (reduce || HEROES.length < 2) return;
     const id = setInterval(() => setIdx((i) => (i + 1) % HEROES.length), 4600);
     return () => clearInterval(id);
-  }, []);
+  }, [reduce]);
 
   if (HEROES.length === 0) return <Warrior size={400} />;
 

@@ -64,8 +64,50 @@ export default async function BoostOrderPage({ params }) {
         </div>
       </div>
 
-      {(isAdmin || o.booster_id === profile.id) && (o.status === "paid" || o.status === "in_progress") && (
-        <BoostAdmin boostId={o.id} status={o.status} isAdmin={isAdmin} isBooster={o.booster_id === profile.id} />
+      {o.booster_id && (
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{t("boost.booster")}</p>
+              <p className="font-medium text-slate-50">{o.booster_name ?? "—"}</p>
+            </div>
+            {o.booster_rating != null && (
+              <span className="inline-flex items-center gap-1 text-sm text-[#F5C451]">
+                <Star size={14} filled className="text-[#F5C451]" /> {Number(o.booster_rating).toFixed(1)}
+                <span className="text-xs text-slate-500">({o.booster_reviews ?? 0})</span>
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {(o.status === "in_progress" || o.status === "completed") && o.matches > 0 && (() => {
+        const done = o.status === "completed" ? o.matches : (o.progress ?? 0);
+        const pct = Math.min(100, Math.round((done / o.matches) * 100));
+        return (
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+            <div className="mb-1.5 flex justify-between text-xs text-slate-400">
+              <span>{t("boost.progress")}</span>
+              <span className="font-semibold text-slate-100">{t("boost.matchesDone", { done, total: o.matches })}</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] transition-all" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        );
+      })()}
+
+      {((isAdmin && ["paid", "in_progress", "completed"].includes(o.status)) ||
+        (o.booster_id === profile.id && ["paid", "in_progress"].includes(o.status))) && (
+        <BoostAdmin
+          boostId={o.id}
+          status={o.status}
+          matches={o.matches}
+          progress={o.progress ?? 0}
+          payoutStatus={o.payout_status ?? "pending"}
+          isAdmin={isAdmin}
+          isBooster={o.booster_id === profile.id}
+        />
       )}
 
       {o.status === "completed" && o.buyer_id === profile.id && (

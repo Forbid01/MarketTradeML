@@ -3,39 +3,37 @@
 import { useEffect, useState } from "react";
 import { Smartphone } from "@/components/icons";
 import { useT } from "@/lib/i18n/client";
+import { useClientValue } from "@/lib/hooks";
 
 // Build Plan 4.3: PWA суулгах урилга.
 // Android/desktop — beforeinstallprompt; iOS Safari — "Нүүр дэлгэцэд нэмэх" заавар.
 const DISMISS_KEY = "mlbb-install-dismissed";
 
+// Browser орчныг mount-д нэг л удаа уншина (useClientValue → SSR-safe, синхрон setState-гүй).
+const isStandalone = () =>
+  window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
+  window.navigator.standalone === true;
+const isIosDevice = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+const wasDismissed = () => {
+  try { return localStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; }
+};
+
 export default function InstallPrompt() {
   const t = useT();
   const [deferred, setDeferred] = useState(null);
-  const [show, setShow] = useState(false);
-  const [iosHint, setIosHint] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const [installed, setInstalled] = useState(false);
+
+  const standalone = useClientValue(isStandalone);
+  const ios = useClientValue(isIosDevice);
+  const alreadyDismissed = useClientValue(wasDismissed);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const dismissed = localStorage.getItem(DISMISS_KEY) === "1";
-    const standalone =
-      window.matchMedia?.("(display-mode: standalone)")?.matches ||
-      window.navigator.standalone === true;
-    if (standalone || dismissed) return;
-
-    // iOS дээр beforeinstallprompt байхгүй → гар заавар
-    if (/iphone|ipad|ipod/i.test(window.navigator.userAgent)) {
-      setIosHint(true);
-      setShow(true);
-    }
-
     const onBip = (e) => {
       e.preventDefault();
       setDeferred(e);
-      setShow(true);
     };
-    const onInstalled = () => setShow(false);
-
+    const onInstalled = () => setInstalled(true);
     window.addEventListener("beforeinstallprompt", onBip);
     window.addEventListener("appinstalled", onInstalled);
     return () => {
@@ -45,7 +43,7 @@ export default function InstallPrompt() {
   }, []);
 
   function dismiss() {
-    setShow(false);
+    setDismissed(true);
     try {
       localStorage.setItem(DISMISS_KEY, "1");
     } catch {}
@@ -56,9 +54,13 @@ export default function InstallPrompt() {
     deferred.prompt();
     await deferred.userChoice;
     setDeferred(null);
-    setShow(false);
+    setDismissed(true);
   }
 
+  // iOS-д beforeinstallprompt байхгүй → гар заавар; Android-д deferred prompt товч.
+  const iosHint = ios && deferred == null;
+  const show =
+    !standalone && !alreadyDismissed && !dismissed && !installed && (ios || deferred != null);
   if (!show) return null;
 
   return (

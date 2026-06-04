@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createBoostInvoice } from "@/lib/actions";
+import { createBoostInvoice, checkPaymentNow } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
 import { RefreshCw } from "@/components/icons";
 
@@ -12,6 +12,7 @@ export default function BoostPay({ boostId }) {
   const t = useT();
   const [inv, setInv] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
   const [err, setErr] = useState(null);
 
   async function pay() {
@@ -21,6 +22,14 @@ export default function BoostPay({ boostId }) {
     setBusy(false);
     if (r.error) { setErr(r.error); return; }
     setInv(r.invoice);
+  }
+
+  // QPay-аас идэвхтэй шалгаад (callback хүлээлгүй) баталгаажвал хуудсыг шинэчилнэ.
+  async function recheck() {
+    setChecking(true);
+    await checkPaymentNow(boostId, "boost");
+    setChecking(false);
+    router.refresh();
   }
 
   if (inv) {
@@ -43,9 +52,9 @@ export default function BoostPay({ boostId }) {
             ))}
           </div>
         )}
-        <button onClick={() => router.refresh()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110">
-          <RefreshCw size={16} /> {t("qpay.check")}
+        <button onClick={recheck} disabled={checking}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50">
+          <RefreshCw size={16} className={checking ? "animate-spin" : ""} /> {checking ? t("qpay.checking") : t("qpay.check")}
         </button>
         <p className="text-center text-xs text-slate-500">{t("qpay.autoNote")}</p>
       </div>

@@ -76,6 +76,12 @@ create table if not exists public.listings (
   deleted_at    timestamptz
 );
 
+-- Үнийн дээд sanity хязгаар (typo/overflow-оос сэргийлнэ; lib/validation.js-тэй ижил).
+-- NOT VALID: одоо байгаа мөрийг шалгахгүй, шинэ/засварлах бичилтэд хүчинтэй (re-apply аюулгүй).
+do $$ begin
+  alter table public.listings add constraint listings_price_max check (price <= 1000000000) not valid;
+exception when duplicate_object then null; end $$;
+
 create table if not exists public.listing_images (
   id            uuid primary key default gen_random_uuid(),
   listing_id    uuid not null references public.listings(id) on delete cascade,
@@ -770,6 +776,25 @@ begin
 end;
 $$;
 
+-- ═══════════════ Boost escrow: явц + booster олголт ═══════════════
+alter table public.boost_orders add column if not exists progress      int not null default 0;
+alter table public.boost_orders add column if not exists payout_status public.payout_status not null default 'pending';
+
+-- Booster-т олголт бүртгэх (зөвхөн админ, completed boost). payout_status='paid_out'.
+create or replace function public.admin_record_boost_payout(p_order_id uuid, p_actor_id uuid)
+returns void language plpgsql as $$
+declare o public.boost_orders;
+begin
+  if not public.is_admin(p_actor_id) then raise exception 'зөвхөн админ'; end if;
+  perform set_config('app.actor_id', p_actor_id::text, true);
+  select * into o from public.boost_orders where id = p_order_id for update;
+  if not found then raise exception 'захиалга олдсонгүй'; end if;
+  if o.status <> 'completed' then raise exception 'зөвхөн дууссан boost-д олголт (одоо: %)', o.status; end if;
+  if o.payout_status = 'paid_out' then raise exception 'аль хэдийн олгосон'; end if;
+  update public.boost_orders set payout_status = 'paid_out' where id = o.id;
+end;
+$$;
+
 -- ═══════════════════════ Rate limiting (mutating action-ууд) ═══════════════════════
 create table if not exists public.rate_events (
   id         bigserial primary key,
@@ -831,50 +856,14 @@ do $$ begin
 exception when others then null; end $$;
 
 -- ╔══════════════════════════════════════════════════════════════════════╗
--- ║  Referral / Loyalty                                                    ║
+-- ║  Referral / Loyalty — ХАССАН (2026-06)                                 ║
+-- ║  Доорх DROP-ууд өмнө үүсгэсэн DB-г идемпотентоор цэвэрлэнэ.            ║
 -- ╚══════════════════════════════════════════════════════════════════════╝
-alter table public.users add column if not exists referral_code  text;
-alter table public.users add column if not exists referred_by    uuid references public.users(id) on delete set null;
-alter table public.users add column if not exists loyalty_points int not null default 0;
-
--- Шинэ хэрэглэгч бүрт давтагдашгүй referral код (id-аас гаргана) — INSERT үед
-create or replace function public.set_referral_code() returns trigger language plpgsql as $$
-begin
-  if new.id is null then new.id := gen_random_uuid(); end if;
-  if new.referral_code is null then
-    new.referral_code := upper(substr(replace(new.id::text, '-', ''), 1, 8));
-  end if;
-  return new;
-end;
-$$;
-do $$ begin
-  create trigger trg_set_referral_code before insert on public.users
-    for each row execute function public.set_referral_code();
-exception when duplicate_object then null; end $$;
-
--- Одоо байгаа хэрэглэгчдийн кодыг backfill
-update public.users set referral_code = upper(substr(replace(id::text, '-', ''), 1, 8))
-  where referral_code is null;
-create unique index if not exists idx_users_referral_code on public.users (referral_code);
-
--- Захиалга "completed" болоход loyalty оноо: худалдан авагч +50, урьсан хүн (анхны худалдан авалт) +100
-create or replace function public.award_loyalty() returns trigger language plpgsql as $$
-declare ref uuid;
-begin
-  if new.status = 'completed' and old.status is distinct from 'completed' then
-    update public.users set loyalty_points = loyalty_points + 50 where id = new.buyer_id;
-    if (select count(*) from public.orders where buyer_id = new.buyer_id and status = 'completed') = 1 then
-      select referred_by into ref from public.users where id = new.buyer_id;
-      if ref is not null and ref <> new.buyer_id then
-        update public.users set loyalty_points = loyalty_points + 100 where id = ref;
-      end if;
-    end if;
-  end if;
-  return new;
-end;
-$$;
-do $$ begin
-  create trigger trg_award_loyalty after update on public.orders
-    for each row when (old.status is distinct from new.status)
-    execute function public.award_loyalty();
-exception when duplicate_object then null; end $$;
+drop trigger if exists trg_award_loyalty   on public.orders;
+drop trigger if exists trg_set_referral_code on public.users;
+drop function if exists public.award_loyalty();
+drop function if exists public.set_referral_code();
+drop index if exists public.idx_users_referral_code;
+alter table public.users drop column if exists loyalty_points;
+alter table public.users drop column if exists referred_by;
+alter table public.users drop column if exists referral_code;

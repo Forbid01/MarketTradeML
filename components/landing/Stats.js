@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/lib/i18n/client";
+import { useReducedMotion } from "@/lib/hooks";
 
 function parseNum(s) {
   const m = String(s).match(/^(\D*)(\d+(?:\.\d+)?)(.*)$/);
@@ -11,18 +12,14 @@ function parseNum(s) {
 
 function Stat({ raw, label }) {
   const { pre, num, suf } = parseNum(raw);
+  const reduce = useReducedMotion();
   const [val, setVal] = useState(num == null ? null : 0);
   const ref = useRef(null);
 
   useEffect(() => {
-    if (num == null) return;
+    if (num == null || reduce) return;
     const el = ref.current;
     if (!el) return;
-    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
-    if (reduce) {
-      setVal(num);
-      return;
-    }
     let raf = 0;
     const io = new IntersectionObserver(
       (entries) => {
@@ -48,9 +45,11 @@ function Stat({ raw, label }) {
       io.disconnect();
       if (raf) cancelAnimationFrame(raf);
     };
-  }, [num]);
+  }, [num, reduce]);
 
-  const display = num == null ? raw : `${pre}${Math.round(val)}${suf}`;
+  // reduced-motion үед шууд эцсийн утга (анимэйшнгүй); эс бөгөөс анимэйшн val.
+  const shown = num == null ? null : reduce ? num : val;
+  const display = num == null ? raw : `${pre}${Math.round(shown)}${suf}`;
 
   return (
     <div ref={ref} className="text-center">

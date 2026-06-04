@@ -1,17 +1,36 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { isDbConfigured } from "@/lib/db";
+import { getMarketStats } from "@/lib/queries";
 import { getT } from "@/lib/i18n/server";
 import Hero from "@/components/landing/Hero";
 import Reveal from "@/components/landing/Reveal";
 import Parallax from "@/components/landing/Parallax";
 import Stats from "@/components/landing/Stats";
+import LiveCounters from "@/components/landing/LiveCounters";
 import StepsTimeline from "@/components/landing/StepsTimeline";
 import ScrollProgress from "@/components/landing/ScrollProgress";
+import SectionDots from "@/components/landing/SectionDots";
+import Marquee from "@/components/landing/Marquee";
+import Preloader from "@/components/landing/Preloader";
 import { Shield, BadgeCheck, Lock, ArrowRight } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
+const SECTION_IDS = ["hero", "trust", "steps", "stats", "cta"];
+
 export default async function Home() {
   const t = await getT();
+
+  // Preloader-ийг зөвхөн анхны зочлолтод (cookie байхгүй) серверт рендэрлэнэ → first-paint-д бүрхэнэ.
+  const introSeen = (await cookies()).get("mlbb_intro")?.value === "1";
+
+  // Live counter-уудад бодит тоо (DB тохируулаагүй/хоосон бол алгасна — худал тоо харуулахгүй).
+  let stats = null;
+  if (isDbConfigured) {
+    try { stats = await getMarketStats(); } catch {}
+  }
+  const showLive = Boolean(stats && (stats.listings > 0 || stats.trades > 0));
 
   const features = [
     { Icon: Shield, title: t("landing.feat1Title"), body: t("landing.feat1Body"), v: "left" },
@@ -27,11 +46,19 @@ export default async function Home() {
 
   return (
     <div className="relative left-1/2 right-1/2 -mx-[50vw] -mt-6 w-screen overflow-hidden">
+      {!introSeen && <Preloader />}
       <ScrollProgress />
-      <Hero />
+      <SectionDots ids={SECTION_IDS} />
+
+      <div id="hero">
+        <Hero />
+      </div>
+
+      {/* Trust marquee */}
+      <Marquee />
 
       {/* Trust / features */}
-      <section className="relative px-4 py-20 sm:py-28">
+      <section id="trust" className="relative px-4 py-20 sm:py-28">
         <Parallax speed={140} className="pointer-events-none absolute -left-20 top-10 -z-10">
           <div className="h-72 w-72 rounded-full bg-[#6D5DF6]/12 blur-[120px]" />
         </Parallax>
@@ -59,16 +86,21 @@ export default async function Home() {
       </section>
 
       {/* How it works — scrubbed timeline */}
-      <section className="relative overflow-hidden border-y border-white/5 bg-[#0B0E1A]/60 px-4 py-20 sm:py-28">
+      <section id="steps" className="relative overflow-hidden border-y border-white/5 bg-[#0B0E1A]/60 px-4 py-20 sm:py-28">
         <Parallax speed={180} className="pointer-events-none absolute -right-24 top-0 -z-10">
           <div className="h-80 w-80 rounded-full bg-[#38BDF8]/10 blur-[130px]" />
         </Parallax>
         <StepsTimeline eyebrow={t("landing.stepsEyebrow")} title={t("landing.stepsTitle")} steps={steps} />
       </section>
 
-      {/* Stats */}
-      <section className="relative px-4 py-20 sm:py-28">
-        <div className="mx-auto max-w-4xl">
+      {/* Stats — live counters + qualitative claims */}
+      <section id="stats" className="relative px-4 py-20 sm:py-28">
+        <div className="mx-auto max-w-4xl space-y-12">
+          {showLive && (
+            <Reveal variant="up">
+              <LiveCounters stats={stats} />
+            </Reveal>
+          )}
           <Reveal variant="scale">
             <Stats />
           </Reveal>
@@ -76,7 +108,7 @@ export default async function Home() {
       </section>
 
       {/* Final CTA */}
-      <section className="px-4 pb-28">
+      <section id="cta" className="px-4 pb-28">
         <Reveal variant="scale">
           <div className="relative mx-auto max-w-3xl overflow-hidden rounded-3xl border border-[#6D5DF6]/30 bg-gradient-to-br from-[#6D5DF6]/15 via-[#0B0E1A] to-[#06070E] px-6 py-16 text-center">
             <Parallax speed={120} zoom={0.15} className="pointer-events-none absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2">

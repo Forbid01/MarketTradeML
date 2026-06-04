@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { query, queryOne } from "@/lib/db";
 import { checkPayment, summarizePaidRows } from "@/lib/qpay";
-import { sendEmail, emailShell } from "@/lib/email";
+import { sendEmail, emailShell, escapeHtml } from "@/lib/email";
 
 export const dynamic = "force-dynamic"; // нууц токентой handler — cache хийхгүй
 
@@ -60,7 +60,7 @@ async function handle(req) {
           );
           for (const p of parties) {
             await sendEmail({ to: p.email, subject: "MLBB — escrow төлбөр баталгаажлаа",
-              html: emailShell("Төлбөр escrow-д хүлээн авлаа", `<b>${p.title}</b> захиалгын төлбөр escrow-д хадгалагдлаа.`) });
+              html: emailShell("Төлбөр escrow-д хүлээн авлаа", `<b>${escapeHtml(p.title)}</b> захиалгын төлбөр escrow-д хадгалагдлаа.`) });
           }
         }
       } catch (e) { console.error("payment email:", e?.message ?? e); }

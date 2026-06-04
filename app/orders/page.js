@@ -3,9 +3,10 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { listOrders, listBoostOrders } from "@/lib/queries";
 import { ORDER_STATUS } from "@/lib/constants";
-import { formatMNT, formatDateTime } from "@/lib/format";
+import { formatMNT, formatDateTime, timeLeft } from "@/lib/format";
 import { getT, getLocale } from "@/lib/i18n/server";
 import StatusBadge from "@/components/StatusBadge";
+import { Clock } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -14,45 +15,115 @@ const BOOST_TONE = {
   completed: "green", cancelled: "zinc", refunded: "red",
 };
 
-export default async function OrdersPage() {
+const GROUPS = {
+  active: ["created", "paid", "transferring", "inspecting"],
+  disputed: ["disputed"],
+  done: ["completed", "cancelled", "expired", "refunded"],
+};
+const TABS = ["all", "active", "disputed", "done"];
+
+// Дараагийн үйлдэл: [i18n түлхүүр, энэ хэрэглэгч өөрөө хийх ёстой эсэх].
+function nextAction(status, isBuyer) {
+  switch (status) {
+    case "created": return isBuyer ? ["pay", true] : ["waitPay", false];
+    case "paid": return isBuyer ? ["waitTransfer", false] : ["transfer", true];
+    case "transferring": return isBuyer ? ["inspect", true] : ["waitInspect", false];
+    case "inspecting": return isBuyer ? ["confirm", true] : ["waitConfirm", false];
+    case "disputed": return ["dispute", false];
+    default: return [null, false];
+  }
+}
+
+export default async function OrdersPage({ searchParams }) {
   const { user, profile } = await getCurrentUser();
   if (!user || !profile) redirect("/login?next=/orders");
   const t = await getT();
   const locale = await getLocale();
+  const sp = (await searchParams) ?? {};
+  const tab = TABS.includes(sp.tab) ? sp.tab : "all";
 
-  // Зөвхөн миний (buyer/seller) захиалгыг буцаана. Query throw → error.js.
   const [orders, boostOrders] = await Promise.all([
     listOrders(profile.id),
     listBoostOrders(profile.id),
   ]);
 
+  // Дашбоард тоо (бүх захиалгаас)
+  let spent = 0, earned = 0, escrow = 0;
+  for (const o of orders) {
+    const isBuyer = o.buyer_id === profile.id;
+    if (o.status === "completed") {
+      if (isBuyer) spent += o.amount;
+      else earned += o.amount - o.fee;
+    }
+    if (["paid", "transferring", "inspecting", "disputed"].includes(o.status)) escrow += o.amount;
+  }
+
+  const filtered = tab === "all" ? orders : orders.filter((o) => GROUPS[tab].includes(o.status));
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <h1 className="text-xl font-bold text-slate-50">{t("order.title")}</h1>
 
-      {!orders?.length ? (
+      <div className="grid grid-cols-3 gap-3">
+        <Stat label={t("order.stat.spent")} value={formatMNT(spent, locale)} />
+        <Stat label={t("order.stat.earned")} value={formatMNT(earned, locale)} />
+        <Stat label={t("order.stat.escrow")} value={formatMNT(escrow, locale)} accent />
+      </div>
+
+      <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
+        {TABS.map((tb) => {
+          const on = tb === tab;
+          return (
+            <Link
+              key={tb}
+              href={tb === "all" ? "/orders" : `/orders?tab=${tb}`}
+              className={`flex-1 rounded-md px-3 py-1.5 text-center text-xs font-medium transition ${
+                on ? "bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white" : "text-slate-400 hover:text-slate-100"
+              }`}
+            >
+              {t(`order.tab.${tb}`)}
+            </Link>
+          );
+        })}
+      </div>
+
+      {!filtered.length ? (
         <p className="py-12 text-center text-slate-500">{t("order.empty")}</p>
       ) : (
         <ul className="space-y-2">
-          {orders.map((o) => {
+          {filtered.map((o) => {
             const tone = ORDER_STATUS[o.status]?.tone ?? "zinc";
-            const label = t(`orderStatus.${o.status}`);
-            const role = o.buyer_id === profile?.id ? t("order.buyer") : t("order.seller");
+            const isBuyer = o.buyer_id === profile.id;
+            const role = isBuyer ? t("order.buyer") : t("order.seller");
+            const [actKey, actionable] = nextAction(o.status, isBuyer);
             return (
               <li key={o.id}>
                 <Link
                   href={`/orders/${o.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-[#6D5DF6]/40 hover:bg-white/[0.06]"
+                  className="block rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-[#6D5DF6]/40 hover:bg-white/[0.06]"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-slate-50">
-                      {o.listing_title ?? t("common.listing")}
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      {role} · {formatMNT(o.amount)} · {formatDateTime(o.created_at)}
-                    </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="shrink-0 rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">{role}</span>
+                        <p className="truncate text-sm font-medium text-slate-50">{o.listing_title ?? t("common.listing")}</p>
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-400">
+                        {formatMNT(o.amount, locale)} · {formatDateTime(o.created_at, locale)}
+                      </p>
+                      {actKey && (
+                        <p className={`mt-1 text-xs font-medium ${actionable ? "text-[#38BDF8]" : "text-slate-500"}`}>
+                          {actionable ? "→ " : ""}{t(`order.act.${actKey}`)}
+                        </p>
+                      )}
+                      {o.status === "inspecting" && o.inspection_ends && (
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-[#F5C451]">
+                          <Clock size={12} /> {timeLeft(o.inspection_ends, locale)}
+                        </p>
+                      )}
+                    </div>
+                    <StatusBadge label={t(`orderStatus.${o.status}`)} tone={tone} />
                   </div>
-                  <StatusBadge label={label} tone={tone} />
                 </Link>
               </li>
             );
@@ -60,8 +131,8 @@ export default async function OrdersPage() {
         </ul>
       )}
 
-      {boostOrders.length > 0 && (
-        <section className="space-y-2 pt-4">
+      {tab === "all" && boostOrders.length > 0 && (
+        <section className="space-y-2 pt-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-[#38BDF8]">{t("boost.title")}</h2>
           <ul className="space-y-2">
             {boostOrders.map((b) => (
@@ -83,6 +154,15 @@ export default async function OrdersPage() {
           </ul>
         </section>
       )}
+    </div>
+  );
+}
+
+function Stat({ label, value, accent }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+      <div className={`truncate text-sm font-extrabold sm:text-base ${accent ? "bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-transparent" : "text-slate-50"}`}>{value}</div>
+      <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
     </div>
   );
 }

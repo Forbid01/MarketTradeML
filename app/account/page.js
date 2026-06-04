@@ -4,7 +4,6 @@ import { getCurrentUser } from "@/lib/auth";
 import { getT } from "@/lib/i18n/server";
 import { BadgeCheck, Star } from "@/components/icons";
 import SignOutButton from "@/components/SignOutButton";
-import ReferralCard from "@/components/ReferralCard";
 
 export const dynamic = "force-dynamic";
 
@@ -45,12 +44,6 @@ export default async function AccountPage() {
         <Row label={t("account.trades")} value={profile?.trades_count ?? 0} />
         {profile?.role === "admin" && <Row label={t("account.role")} value={t("account.admin")} />}
       </div>
-
-      <ReferralCard
-        code={profile?.referral_code ?? ""}
-        points={profile?.loyalty_points ?? 0}
-        siteUrl={process.env.NEXT_PUBLIC_SITE_URL ?? ""}
-      />
 
       <div className="flex gap-2">
         <Link
