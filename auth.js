@@ -41,13 +41,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (ev === false || ev === "false") return false;
         const email = (user?.email ?? profile?.email ?? "").toLowerCase();
         if (!email) return false;
-        const u = await upsertUserByEmail(email, {
-          name: user?.name ?? profile?.name,
-          image: user?.image ?? profile?.picture,
-        });
-        if (!u) return false;
-        user.id = u.id;
-        user.role = u.role;
+        try {
+          const u = await upsertUserByEmail(email, {
+            name: user?.name ?? profile?.name,
+            image: user?.image ?? profile?.picture,
+          });
+          if (!u) return false;
+          user.id = u.id;
+          user.role = u.role;
+        } catch (e) {
+          // Ихэвчлэн DATABASE_URL тавиагүй / schema ачаалаагүй (users хүснэгт алга).
+          // Vercel → Logs дээр энэ мессеж харагдана.
+          console.error("Google signIn DB upsert FAILED — DATABASE_URL/schema шалгана уу:", e?.message ?? e);
+          return false;
+        }
       }
       return true;
     },
