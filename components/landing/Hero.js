@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useT } from "@/lib/i18n/client";
-import { Warrior } from "@/components/Warrior";
+import HeroShowcase from "@/components/landing/HeroShowcase";
 import { ArrowRight, Lock, BadgeCheck } from "@/components/icons";
 
 const BARS = [["Level", "82%"], ["Heroes", "68%"], ["Skins", "45%"], ["Win", "58%"]];
@@ -118,10 +118,10 @@ export default function Hero() {
             />
           ))}
 
-          {/* the warrior (parallax tilt + idle float) */}
+          {/* hero showcase (лицензтэй зураг) / warrior fallback — parallax tilt + idle float */}
           <div ref={stageRef} className="tilt-card relative z-10">
             <div className="motion-safe:animate-[heroFloat_6s_ease-in-out_infinite]">
-              <Warrior size={400} />
+              <HeroShowcase />
             </div>
           </div>
 
