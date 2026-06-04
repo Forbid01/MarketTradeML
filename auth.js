@@ -34,8 +34,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account, profile }) {
       // Google нэвтрэлтэд users мөр upsert хийж id/role-ийг user-д залгана
       if (account?.provider === "google") {
-        // Зөвхөн БАТАЛГААЖСАН Google и-мэйл (account takeover / OTP-аккаунт булаахаас сэргийлнэ)
-        if (profile?.email_verified !== true) return false;
+        // Google зөвхөн баталгаажсан и-мэйлд токен олгодог. email_verified нь boolean true,
+        // string "true", эсвэл заримдаа байхгүй ирдэг тул ЗӨВХӨН тодорхой false үед татгалзана
+        // (хэт хатуу шалгалт жинхэнэ хэрэглэгчийг "Access Denied" болгохоос сэргийлнэ).
+        const ev = profile?.email_verified;
+        if (ev === false || ev === "false") return false;
         const email = (user?.email ?? profile?.email ?? "").toLowerCase();
         if (!email) return false;
         const u = await upsertUserByEmail(email, {
