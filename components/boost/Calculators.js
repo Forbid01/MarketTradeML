@@ -1,8 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n/client";
 import { formatMNT } from "@/lib/format";
+import { createBoostOrder } from "@/lib/actions";
 import { BOOST, RANK_LADDER, rankMatches, boostTotal } from "@/lib/boost";
 import { Star, ShieldCheck, RefreshCw, ArrowRight, BadgeCheck } from "@/components/icons";
 
@@ -20,9 +23,22 @@ function Toggle({ on, onClick, children }) {
   );
 }
 
-function Card({ icon, title, desc, perMatch, matches, total, children }) {
+function Card({ icon, title, desc, perMatch, matches, total, service, config, children }) {
   const t = useT();
-  const [done, setDone] = useState(false);
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState(null);
+
+  async function order() {
+    setBusy(true);
+    setErr(null);
+    const r = await createBoostOrder(service, config);
+    setBusy(false);
+    if (r.error) { setErr(r.error); return; }
+    router.push(`/boost/${r.id}`);
+    router.refresh();
+  }
+
   return (
     <div className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-[#6D5DF6]/30">
       <div className="flex items-start justify-between gap-3">
@@ -48,16 +64,16 @@ function Card({ icon, title, desc, perMatch, matches, total, children }) {
           </div>
         </div>
         <button
-          onClick={() => setDone(true)}
-          disabled={matches <= 0}
+          onClick={order}
+          disabled={matches <= 0 || busy}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition hover:brightness-110 disabled:opacity-40"
         >
           {t("boost.order")} <ArrowRight size={16} />
         </button>
       </div>
-      {done && (
-        <p className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-500/15 p-2 text-center text-xs text-emerald-300">
-          {t("boost.requested")}
+      {err && (
+        <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/15 p-2 text-center text-xs text-red-300">
+          {err} {err.includes("Нэвтэр") && <Link href="/login?next=/boost" className="underline">/login</Link>}
         </p>
       )}
     </div>
@@ -91,6 +107,7 @@ export function WinrateBoostCalc() {
       icon={<RefreshCw size={20} className="text-[#38BDF8]" />}
       title={t("boost.winrate.title")} desc={t("boost.winrate.desc")}
       perMatch={BOOST.winrate.perMatch} matches={wins} total={total}
+      service="winrate" config={{ wins, express, duo }}
     >
       <Slider label={t("boost.winrate.winsLabel")} value={wins} min={BOOST.winrate.min} max={BOOST.winrate.max} onChange={setWins} />
       <div className="flex flex-wrap gap-2">
@@ -115,6 +132,7 @@ export function RankBoostCalc() {
       icon={<Star size={20} filled className="text-[#F5C451]" />}
       title={t("boost.rank.title")} desc={t("boost.rank.desc")}
       perMatch={BOOST.rank.perMatch} matches={matches} total={total}
+      service="rank" config={{ fromIdx: from, toIdx: to, express, duo }}
     >
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -149,6 +167,7 @@ export function SquadRentCalc() {
       icon={<ShieldCheck size={20} className="text-[#6D5DF6]" />}
       title={t("boost.squad.title")} desc={t("boost.squad.desc")}
       perMatch={BOOST.squad.perMatch} matches={m} total={total}
+      service="squad" config={{ matches: m, express }}
     >
       <Slider label={t("boost.squad.matchesLabel")} value={m} min={BOOST.squad.min} max={BOOST.squad.max} onChange={setM} />
       <p className="inline-flex items-center gap-1.5 text-xs text-slate-400">

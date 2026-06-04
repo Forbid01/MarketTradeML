@@ -723,3 +723,45 @@ begin
   perform set_config('app.allow_trust_update', '0', true);  -- цонхыг шууд хаах (defense)
 end;
 $$;
+
+-- ═══════════════════════ Boosting захиалга (services) ═══════════════════════
+-- Account худалдаанаас тусдаа: winrate/rank/squad үйлчилгээ. Үнийг СЕРВЕР талд
+-- lib/boost.js-ийн логикоор дахин тооцоолно (client дүнд найдахгүй).
+create table if not exists public.boost_orders (
+  id              uuid primary key default gen_random_uuid(),
+  buyer_id        uuid not null references public.users(id) on delete restrict,
+  service         text not null check (service in ('winrate','rank','squad')),
+  config          jsonb not null,
+  matches         int not null check (matches > 0),
+  amount          bigint not null check (amount > 0),
+  status          text not null default 'created'
+                    check (status in ('created','paid','in_progress','completed','cancelled','refunded')),
+  qpay_invoice_id text,
+  booster_id      uuid references public.users(id) on delete set null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+create index if not exists idx_boost_orders_buyer on public.boost_orders (buyer_id);
+create unique index if not exists uq_boost_qpay_invoice
+  on public.boost_orders (qpay_invoice_id) where qpay_invoice_id is not null;
+
+do $$ begin
+  create trigger set_updated_at before update on public.boost_orders
+    for each row execute function public.set_updated_at();
+exception when duplicate_object then null; end $$;
+
+-- Boost төлбөр баталгаажуулах (idempotent — created→paid зөвхөн нэг удаа, FOR UPDATE).
+create or replace function public.confirm_boost_payment(
+  p_order_id uuid, p_qpay_invoice_id text, p_paid_total bigint)
+returns text language plpgsql as $$
+declare o public.boost_orders;
+begin
+  select * into o from public.boost_orders where id = p_order_id for update;
+  if not found then return 'order_not_found'; end if;
+  if o.status <> 'created' then return 'noop'; end if;
+  if p_paid_total < o.amount then return 'underpaid'; end if;
+  update public.boost_orders set status = 'paid',
+    qpay_invoice_id = coalesce(qpay_invoice_id, p_qpay_invoice_id) where id = o.id;
+  return 'paid';
+end;
+$$;
