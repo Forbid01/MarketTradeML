@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { sendMessage, getOrderMessages, sendBoostMessage, getBoostMessages } from "@/lib/actions";
+import { sendMessage, sendBoostMessage } from "@/lib/actions";
 import { formatDateTime } from "@/lib/format";
-import { useT } from "@/lib/i18n/client";
+import { useT, useLocale } from "@/lib/i18n/client";
 import { Clock, Check, ArrowRight } from "@/components/icons";
 
 // Захиалга тус бүрийн чат. "Realtime" = ухаалаг polling:
@@ -33,6 +33,7 @@ function lastRealSeq(msgs) {
 
 export default function OrderChat({ orderId, myUserId, initialMessages, kind = "order" }) {
   const t = useT();
+  const locale = useLocale();
   const [messages, setMessages] = useState(() => (initialMessages ?? []).slice().sort(byOrder));
   const [body, setBody] = useState("");
   const [hasNew, setHasNew] = useState(false);
@@ -81,7 +82,13 @@ export default function OrderChat({ orderId, myUserId, initialMessages, kind = "
     let added = false;
     try {
       const cur = cursorRef.current;
-      const r = await (kind === "boost" ? getBoostMessages : getOrderMessages)(orderId, cur != null ? { afterSeq: cur } : undefined);
+      // Route handler-ээр poll хийнэ (server action биш — client талд action-ууд
+      // нэг дараалалд цувардаг тул poll нь бусад үйлдлийг хойшлуулдаг байсан)
+      const qs = new URLSearchParams({ order: orderId });
+      if (kind === "boost") qs.set("kind", "boost");
+      if (cur != null) qs.set("after", String(cur));
+      const res = await fetch(`/api/messages?${qs}`, { cache: "no-store" });
+      const r = res.ok ? await res.json() : null;
       if (!mountedRef.current) return;
       if (r?.ok) {
         added = (r.messages?.length ?? 0) > 0;
@@ -215,10 +222,12 @@ export default function OrderChat({ orderId, myUserId, initialMessages, kind = "
           messages.map((m) => {
             const mine = m.sender_id === myUserId;
             return (
-              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              // Өөрийн мессежийг live region-оос хасна (aria-live=off) — эс бөгөөс бичсэн
+              // зүйлээ + pending төлвийн өөрчлөлтөө SR дээр давхар сонсдог байсан.
+              <div key={m.id} aria-live={mine ? "off" : undefined} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[75%] rounded-2xl px-3 py-1.5 text-sm ${
-                    mine ? "bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white" : "bg-white/10 text-slate-100"
+                    mine ? "bg-gradient-to-r from-violet to-azure text-white" : "bg-white/10 text-slate-100"
                   } ${m.pending ? "opacity-70" : ""} ${m.failed ? "ring-1 ring-red-400/60" : ""}`}
                 >
                   <p className="whitespace-pre-wrap break-words">{m.body}</p>
@@ -230,7 +239,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages, kind = "
                         {t("chat.failed")} · {t("chat.retry")}
                       </button>
                     ) : (
-                      formatDateTime(m.created_at)
+                      formatDateTime(m.created_at, locale)
                     )}
                   </p>
                 </div>
@@ -246,7 +255,7 @@ export default function OrderChat({ orderId, myUserId, initialMessages, kind = "
           type="button"
           onClick={jumpToBottom}
           aria-label={t("chat.newMessages")}
-          className="absolute bottom-16 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-3 py-1 text-xs font-medium text-white shadow-lg"
+          className="absolute bottom-16 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-gradient-to-r from-violet to-azure px-3 py-1 text-xs font-medium text-white shadow-lg"
         >
           {t("chat.newMessages")} <ArrowRight size={13} className="rotate-90" />
         </button>
@@ -258,12 +267,12 @@ export default function OrderChat({ orderId, myUserId, initialMessages, kind = "
           onChange={(e) => setBody(e.target.value)}
           placeholder={t("chat.placeholder")}
           aria-label={t("chat.placeholder")}
-          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
+          className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-violet focus:ring-1 focus:ring-violet"
         />
         <button
           type="submit"
           disabled={!body.trim()}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet to-azure px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
         >
           <Check size={15} /> {t("chat.send")}
         </button>

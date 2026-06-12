@@ -4,12 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminResolveDispute } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
+import { useAction } from "@/lib/hooks";
+import Button from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Input";
 import { ClipboardCheck } from "@/components/icons";
 
 // Build Plan 2.1: маргаан шийдвэрлэх (adminResolveDispute action — мөр + тэмдэглэл + audit).
 export default function AdminDisputeResolve({ disputeId }) {
   const router = useRouter();
   const t = useT();
+  const call = useAction();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -17,38 +21,36 @@ export default function AdminDisputeResolve({ disputeId }) {
   async function resolve(outcome) {
     setBusy(true);
     setErr(null);
-    const res = await adminResolveDispute(disputeId, outcome, note.trim() || null);
+    const res = await call(adminResolveDispute, disputeId, outcome, note.trim() || null);
     setBusy(false);
     if (res?.error) setErr(res.error);
     else router.refresh();
   }
 
-  const btn = "rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50";
-
   return (
-    <div className="space-y-2 rounded-xl border border-[#F5C451]/30 bg-[#F5C451]/10 p-4">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-[#F5C451]">
+    <div className="space-y-2 rounded-xl border border-gold/30 bg-gold/10 p-4">
+      <h3 className="flex items-center gap-2 text-sm font-semibold text-gold">
         <ClipboardCheck size={16} /> {t("adminAct.resolveTitle")}
       </h3>
-      <textarea
+      <Textarea
+        aria-label={t("adminAct.notePh")}
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={2}
         placeholder={t("adminAct.notePh")}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
       />
       <div className="flex flex-wrap gap-2">
-        <button disabled={busy} onClick={() => resolve("released")} className={`${btn} bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white hover:brightness-110`}>
+        <Button size="sm" disabled={busy} onClick={() => resolve("released")}>
           {t("adminAct.release")}
-        </button>
-        <button disabled={busy} onClick={() => resolve("refunded")} className={`${btn} bg-red-600 text-white hover:bg-red-700`}>
+        </Button>
+        <Button size="sm" variant="danger" disabled={busy} onClick={() => resolve("refunded")}>
           {t("adminAct.refund")}
-        </button>
-        <button disabled={busy} onClick={() => resolve("rejected")} className={`${btn} border border-white/15 text-slate-200 hover:bg-white/10`}>
+        </Button>
+        <Button size="sm" variant="ghost" disabled={busy} onClick={() => resolve("rejected")}>
           {t("adminAct.reject")}
-        </button>
+        </Button>
       </div>
-      {err && <p className="text-sm text-red-300">{err}</p>}
+      {err && <p role="alert" className="text-sm text-red-300">{err}</p>}
     </div>
   );
 }

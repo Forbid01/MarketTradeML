@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isUuid } from "@/lib/validation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -29,6 +30,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OrderDetail({ params }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const { user, profile } = await getCurrentUser();
   if (!user || !profile) redirect(`/login?next=/orders/${id}`);
 
@@ -66,7 +68,7 @@ export default async function OrderDetail({ params }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-lg font-bold text-slate-50">{order.listing_title ?? "—"}</h1>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               {isBuyer ? t("order.buyer") : isSeller ? t("order.seller") : t("order.admin")} · {formatDateTime(order.created_at, locale)}
             </p>
           </div>
@@ -83,8 +85,8 @@ export default async function OrderDetail({ params }) {
         </div>
 
         {order.status === "inspecting" && order.inspection_ends && (
-          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#F5C451]/10 px-3 py-1.5 text-sm text-[#F5C451]">
-            <Clock size={16} className="shrink-0 text-[#F5C451]" />
+          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-gold/10 px-3 py-1.5 text-sm text-gold">
+            <Clock size={16} className="shrink-0 text-gold" />
             {t("order.inspection", { left: timeLeft(order.inspection_ends, locale), date: formatDateTime(order.inspection_ends, locale) })}
           </p>
         )}
@@ -103,8 +105,8 @@ export default async function OrderDetail({ params }) {
 
       {/* Админ удирдлага */}
       {isAdmin && (
-        <div className="space-y-3 rounded-xl border border-[#F5C451]/30 bg-[#F5C451]/10 p-4">
-          <h2 className="text-sm font-semibold text-[#F5C451]">{t("order.adminControls")}</h2>
+        <div className="space-y-3 rounded-xl border border-gold/30 bg-gold/10 p-4">
+          <h2 className="text-sm font-semibold text-gold">{t("order.adminControls")}</h2>
           <AdminVerifyToggle userId={order.seller_id} isVerified={sellerProfile?.is_verified ?? false} />
           {order.status === "disputed" && dispute && <AdminDisputeResolve disputeId={dispute.id} />}
           {order.status === "completed" && order.payout_status === "pending" && (
@@ -132,7 +134,7 @@ export default async function OrderDetail({ params }) {
                   key={i}
                   size={16}
                   filled={i < review.stars}
-                  className={i < review.stars ? "text-[#F5C451]" : "text-white/15"}
+                  className={i < review.stars ? "text-gold" : "text-white/15"}
                 />
               ))}
             </div>

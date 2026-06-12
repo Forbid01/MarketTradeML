@@ -19,7 +19,7 @@ export default function Error({ error, reset }) {
       <p className="mt-2 text-sm text-slate-400">{t("errorPage.body")}</p>
       <button
         onClick={() => reset()}
-        className="mt-5 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110"
+        className="mt-5 rounded-lg bg-gradient-to-r from-violet to-azure px-4 py-2 text-sm font-medium text-white hover:brightness-110"
       >
         {t("errorPage.retry")}
       </button>

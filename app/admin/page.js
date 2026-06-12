@@ -43,7 +43,7 @@ export default async function AdminPage() {
             >
               <p className="font-medium text-slate-50">{d.listing_title ?? "Захиалга"}</p>
               <p className="text-slate-400">{d.reason}</p>
-              <p className="text-xs text-slate-500">{formatDateTime(d.created_at)}</p>
+              <p className="text-xs text-slate-400">{formatDateTime(d.created_at, locale)}</p>
             </Link>
           ))
         )}
@@ -62,7 +62,7 @@ export default async function AdminPage() {
             <Link
               key={o.id}
               href={`/orders/${o.id}`}
-              className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm hover:border-[#6D5DF6]/40"
+              className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] p-3 text-sm hover:border-violet/40"
             >
               <span className="text-slate-50">{o.listing_title ?? "Захиалга"}</span>
               <span className="text-emerald-300">{formatMNT(o.amount - o.fee, locale)}</span>

@@ -4,13 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { openDispute } from "@/lib/actions";
 import { formatDateTime } from "@/lib/format";
-import { useT } from "@/lib/i18n/client";
+import { useT, useLocale } from "@/lib/i18n/client";
+import { useAction } from "@/lib/hooks";
 import { Shield } from "@/components/icons";
 
 // Build Plan 1.13: маргаан нээх (openDispute server action). Шийдвэрлэлт админ талд (AdminDisputeResolve).
 export default function DisputeBox({ orderId, status, dispute, canOpen }) {
   const router = useRouter();
   const t = useT();
+  const locale = useLocale();
+  const call = useAction();
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
@@ -20,7 +23,7 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
     if (!reason.trim()) return;
     setBusy(true);
     setErr(null);
-    const res = await openDispute(orderId, reason.trim());
+    const res = await call(openDispute, orderId, reason.trim());
     setBusy(false);
     if (res?.error) setErr(res.error);
     else router.refresh();
@@ -36,7 +39,7 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
         <p className="text-slate-300"><b>{t("dispute.reason")}:</b> {dispute.reason}</p>
         <p className="text-slate-400">{t("dispute.status")}: {t(`dispute.${dispute.status}`)}</p>
         {dispute.admin_note && <p className="text-slate-400"><b>{t("dispute.admin")}:</b> {dispute.admin_note}</p>}
-        <p className="text-xs text-slate-500">{formatDateTime(dispute.created_at)}</p>
+        <p className="text-xs text-slate-400">{formatDateTime(dispute.created_at, locale)}</p>
       </section>
     );
   }
@@ -50,13 +53,14 @@ export default function DisputeBox({ orderId, status, dispute, canOpen }) {
         {t("dispute.openTitle")}
       </h3>
       <textarea
+        aria-label={t("dispute.openTitle")}
         value={reason}
         onChange={(e) => setReason(e.target.value)}
         rows={2}
         placeholder={t("dispute.reasonPh")}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-violet focus:ring-1 focus:ring-violet"
       />
-      {err && <p className="text-sm text-red-300">{err}</p>}
+      {err && <p role="alert" className="text-sm text-red-300">{err}</p>}
       <button
         disabled={busy}
         className="rounded-lg border border-red-500/30 bg-red-500/15 px-4 py-2 text-sm text-red-300 hover:brightness-110 disabled:opacity-50"

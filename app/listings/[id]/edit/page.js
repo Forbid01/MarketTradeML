@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isUuid } from "@/lib/validation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getListingById } from "@/lib/queries";
@@ -9,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EditListingPage({ params }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const { user, profile } = await getCurrentUser();
   if (!user || !profile) redirect(`/login?next=/listings/${id}/edit`);
 

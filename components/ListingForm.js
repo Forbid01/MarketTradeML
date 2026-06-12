@@ -6,16 +6,18 @@ import { createListing, editListing, addListingImage, deleteListingImage } from 
 import { RANKS, SERVERS } from "@/lib/constants";
 import { listingSchema } from "@/lib/validation";
 import { compressImage } from "@/lib/image";
-import { useT } from "@/lib/i18n/client";
-import ListingCard from "@/components/ListingCard";
+import { useT, useLocale } from "@/lib/i18n/client";
+import { useAction } from "@/lib/hooks";
+import { Input, Select, Textarea } from "@/components/ui/Input";
+import ListingCardView from "@/components/ListingCardView";
+import { formatMNT } from "@/lib/format";
 import { ImageIcon, ArrowRight, Check, ShieldCheck } from "@/components/icons";
-
-const field =
-  "w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]";
 
 export default function ListingForm({ listing = null, images = [], me = null }) {
   const router = useRouter();
   const t = useT();
+  const locale = useLocale();
+  const call = useAction();
   const editing = Boolean(listing);
   const stepsRaw = t("listingForm.steps");
   const stepList = Array.isArray(stepsRaw) ? stepsRaw : [];
@@ -34,6 +36,7 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
   });
   const [files, setFiles] = useState([]); // шинэ зураг (дараалал = sort_order)
   const [imgs, setImgs] = useState(images); // одоо байгаа зураг (засах үед)
+  const [createdId, setCreatedId] = useState(null); // зар үүссэн ч зураг дутуу үлдсэн retry төлөв
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState(null);
 
@@ -71,7 +74,7 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
   }
   const removeFile = (i) => setFiles((arr) => arr.filter((_, k) => k !== i));
   async function removeImg(id) {
-    const r = await deleteListingImage(id);
+    const r = await call(deleteListingImage, id);
     if (r.ok) setImgs((a) => a.filter((x) => x.id !== id));
     else setErr(r.error);
   }
@@ -113,32 +116,49 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
         );
       }
 
-      let targetId;
-      if (editing) {
-        const r = await editListing(listing.id, parsed.data);
-        if (r.error) throw new Error(r.error);
-        targetId = listing.id;
+      // createdId: өмнөх оролдлогод зар үүссэн ч зураг дутуу үлдсэн бол ДАХИН зар
+      // үүсгэхгүй — зөвхөн үлдсэн зургуудыг илгээнэ (давхар зар үүсэхээс сэргийлнэ).
+      let targetId = editing ? listing.id : createdId;
+      if (targetId) {
+        if (editing) {
+          const r = await call(editListing, listing.id, parsed.data);
+          if (r.error) throw new Error(r.error);
+        }
       } else {
-        const r = await createListing(parsed.data);
+        const r = await call(createListing, parsed.data);
         if (r.error) throw new Error(r.error);
         if (!r.id) throw new Error(t("listingForm.errInvalid"));
         targetId = r.id;
+        setCreatedId(r.id);
       }
 
-      // Зургийг дараалаар нь best-effort upload (30с timeout). Алдаа гарсан ч зар руу шилжинэ.
+      // Зургийг дараалаар нь upload (30с timeout). Амжилтгүйг нь хадгалж feedback өгнө.
       const base = imgs?.length ?? 0;
+      const failed = [];
       for (let i = 0; i < files.length; i++) {
         try {
           const blob = await compressImage(files[i]);
-          if (blob.size > 7_000_000) continue;
+          if (blob.size > 7_000_000) { failed.push(files[i]); continue; }
           const fd = new FormData();
           fd.append("file", blob);
           fd.append("sort", String(base + i));
-          await Promise.race([
-            addListingImage(targetId, fd),
+          const r = await Promise.race([
+            call(addListingImage, targetId, fd),
             new Promise((resolve) => setTimeout(() => resolve({ error: "timeout" }), 30000)),
           ]);
-        } catch {}
+          if (r?.error) failed.push(files[i]);
+        } catch {
+          failed.push(files[i]);
+        }
+      }
+
+      if (failed.length) {
+        // Зар хадгалагдсан, гэхдээ зарим зураг орсонгүй — амжилтгүй файлуудыг үлдээж
+        // хэрэглэгч ДАХИН ОРОЛДОХ боломжтойгоор формон дээр үлдэнэ.
+        setFiles(failed);
+        setErr(t("listingForm.errImages", { n: failed.length }));
+        setBusy(false);
+        return;
       }
 
       router.push(`/listings/${targetId}`);
@@ -166,14 +186,14 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
                   onClick={() => i < step && setStep(i)}
                   disabled={i > step}
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition ${
-                    on ? "border-[#38BDF8] bg-[#38BDF8]/15 text-[#38BDF8]"
+                    on ? "border-azure bg-azure/15 text-azure"
                     : done ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-300"
-                    : "border-white/15 text-slate-500"
+                    : "border-white/15 text-slate-400"
                   }`}
                 >
                   {done ? <Check size={14} /> : i + 1}
                 </button>
-                <span className={`hidden text-xs font-medium sm:inline ${on ? "text-slate-50" : "text-slate-500"}`}>{label}</span>
+                <span className={`hidden text-xs font-medium sm:inline ${on ? "text-slate-50" : "text-slate-400"}`}>{label}</span>
                 {i < last && <span className={`h-px flex-1 ${done ? "bg-emerald-400/40" : "bg-white/10"}`} />}
               </li>
             );
@@ -184,26 +204,26 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-200">{t("listingForm.title")}</label>
-              <input className={field} required value={form.title} onChange={(e) => update("title", e.target.value)} placeholder={t("listingForm.titlePh")} />
+              <label htmlFor="lf-title" className="mb-1 block text-sm text-slate-200">{t("listingForm.title")}</label>
+              <Input id="lf-title" aria-describedby="lf-err" required value={form.title} onChange={(e) => update("title", e.target.value)} placeholder={t("listingForm.titlePh")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-sm text-slate-200">{t("listingForm.price")}</label>
-                <input className={field} required inputMode="numeric" value={form.price} onChange={(e) => update("price", e.target.value.replace(/[^0-9]/g, ""))} placeholder={t("listingForm.pricePh")} />
+                <label htmlFor="lf-price" className="mb-1 block text-sm text-slate-200">{t("listingForm.price")}</label>
+                <Input id="lf-price" aria-describedby="lf-err" required inputMode="numeric" value={form.price} onChange={(e) => update("price", e.target.value.replace(/[^0-9]/g, ""))} placeholder={t("listingForm.pricePh")} />
               </div>
               <div>
-                <label className="mb-1 block text-sm text-slate-200">{t("listingForm.server")}</label>
-                <select className={field} value={form.server} onChange={(e) => update("server", e.target.value)}>
+                <label htmlFor="lf-server" className="mb-1 block text-sm text-slate-200">{t("listingForm.server")}</label>
+                <Select id="lf-server" value={form.server} onChange={(e) => update("server", e.target.value)}>
                   {SERVERS.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+                </Select>
               </div>
             </div>
             <div>
-              <label className="mb-1 block text-sm text-slate-200">{t("listingForm.rank")}</label>
-              <select className={field} value={form.rank} onChange={(e) => update("rank", e.target.value)}>
+              <label htmlFor="lf-rank" className="mb-1 block text-sm text-slate-200">{t("listingForm.rank")}</label>
+              <Select id="lf-rank" value={form.rank} onChange={(e) => update("rank", e.target.value)}>
                 {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
-              </select>
+              </Select>
             </div>
           </div>
         )}
@@ -212,14 +232,14 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
         {step === 1 && (
           <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-200">{t("listingForm.description")}</label>
-              <textarea className={field} rows={4} value={form.description} onChange={(e) => update("description", e.target.value)} placeholder={t("listingForm.descPh")} />
+              <label htmlFor="lf-desc" className="mb-1 block text-sm text-slate-200">{t("listingForm.description")}</label>
+              <Textarea id="lf-desc" rows={4} value={form.description} onChange={(e) => update("description", e.target.value)} placeholder={t("listingForm.descPh")} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className="mb-1 block text-xs text-slate-400">{t("listingForm.level")}</label><input className={field} inputMode="numeric" value={form.level} onChange={(e) => update("level", e.target.value.replace(/[^0-9]/g, ""))} placeholder="70" /></div>
-              <div><label className="mb-1 block text-xs text-slate-400">{t("listingForm.heroes")}</label><input className={field} inputMode="numeric" value={form.heroes_count} onChange={(e) => update("heroes_count", e.target.value.replace(/[^0-9]/g, ""))} placeholder="50" /></div>
-              <div><label className="mb-1 block text-xs text-slate-400">{t("listingForm.skins")}</label><input className={field} inputMode="numeric" value={form.skins_count} onChange={(e) => update("skins_count", e.target.value.replace(/[^0-9]/g, ""))} placeholder="30" /></div>
-              <div><label className="mb-1 block text-xs text-slate-400">{t("listingForm.winRate")}</label><input className={field} inputMode="decimal" value={form.win_rate} onChange={(e) => update("win_rate", e.target.value.replace(/[^0-9.]/g, ""))} placeholder="55.5" /></div>
+              <div><label htmlFor="lf-level" className="mb-1 block text-xs text-slate-400">{t("listingForm.level")}</label><Input id="lf-level" inputMode="numeric" value={form.level} onChange={(e) => update("level", e.target.value.replace(/[^0-9]/g, ""))} placeholder="70" /></div>
+              <div><label htmlFor="lf-heroes" className="mb-1 block text-xs text-slate-400">{t("listingForm.heroes")}</label><Input id="lf-heroes" inputMode="numeric" value={form.heroes_count} onChange={(e) => update("heroes_count", e.target.value.replace(/[^0-9]/g, ""))} placeholder="50" /></div>
+              <div><label htmlFor="lf-skins" className="mb-1 block text-xs text-slate-400">{t("listingForm.skins")}</label><Input id="lf-skins" inputMode="numeric" value={form.skins_count} onChange={(e) => update("skins_count", e.target.value.replace(/[^0-9]/g, ""))} placeholder="30" /></div>
+              <div><label htmlFor="lf-wr" className="mb-1 block text-xs text-slate-400">{t("listingForm.winRate")}</label><Input id="lf-wr" inputMode="decimal" value={form.win_rate} onChange={(e) => update("win_rate", e.target.value.replace(/[^0-9.]/g, ""))} placeholder="55.5" /></div>
             </div>
           </div>
         )}
@@ -244,7 +264,7 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
                   <div key={url} className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={url} alt="" className="h-16 w-24 rounded-lg border border-white/10 object-cover" />
-                    {i === 0 && <span className="absolute left-1 top-1 rounded bg-[#F5C451] px-1 text-[9px] font-bold uppercase text-[#06070E]">{t("listingForm.cover")}</span>}
+                    {i === 0 && <span className="absolute left-1 top-1 rounded bg-gold px-1 text-[9px] font-bold uppercase text-[#06070E]">{t("listingForm.cover")}</span>}
                     <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-[#06070E]/70 px-1 text-sm leading-none text-slate-100">
                       <button type="button" disabled={i === 0} onClick={() => moveFile(i, -1)} aria-label={t("listingForm.moveLeft")} className="px-1 disabled:opacity-30">‹</button>
                       <button type="button" disabled={i === previews.length - 1} onClick={() => moveFile(i, 1)} aria-label={t("listingForm.moveRight")} className="px-1 disabled:opacity-30">›</button>
@@ -254,12 +274,12 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
                 ))}
               </div>
             )}
-            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] py-8 text-center transition hover:border-[#6D5DF6]/40">
-              <ImageIcon size={28} className="text-slate-500" />
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] py-8 text-center transition hover:border-violet/40">
+              <ImageIcon size={28} className="text-slate-400" />
               <span className="text-sm text-slate-400">{t("listingForm.addMore")}</span>
               <input type="file" accept="image/*" multiple onChange={pickFiles} className="hidden" />
             </label>
-            {files.length > 0 && <p className="text-xs text-slate-500">{t("listingForm.imagesSelected", { n: files.length })}</p>}
+            {files.length > 0 && <p className="text-xs text-slate-400">{t("listingForm.imagesSelected", { n: files.length })}</p>}
           </div>
         )}
 
@@ -267,19 +287,25 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
         {step === 3 && (
           <div className="space-y-4">
             <div className="lg:hidden">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#38BDF8]">{t("listingForm.reviewNote")}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-azure">{t("listingForm.reviewNote")}</p>
               <div className="max-w-[240px]">
-                <ListingCard listing={previewListing} seller={me} imageUrl={coverUrl} />
+                <ListingCardView
+                  listing={previewListing}
+                  seller={me}
+                  imageUrl={coverUrl}
+                  priceText={formatMNT(previewListing.price, locale)}
+                  labels={{ fresh: t("card.new"), escrow: t("card.escrow"), status: null, tier: null }}
+                />
               </div>
             </div>
-            <div className="flex gap-2 rounded-xl border border-[#F5C451]/30 bg-[#F5C451]/10 p-3 text-xs leading-relaxed text-[#F5C451]">
+            <div className="flex gap-2 rounded-xl border border-gold/30 bg-gold/10 p-3 text-xs leading-relaxed text-gold">
               <ShieldCheck size={16} className="mt-0.5 shrink-0" />
               <p>{t("listingForm.moontonWarn")}</p>
             </div>
           </div>
         )}
 
-        {err && <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/15 p-2 text-sm text-red-300">{err}</p>}
+        {err && <p id="lf-err" role="alert" className="mt-3 rounded-lg border border-red-500/30 bg-red-500/15 p-2 text-sm text-red-300">{err}</p>}
 
         {/* Nav */}
         <div className="mt-5 flex items-center justify-between gap-2">
@@ -287,11 +313,11 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
             {t("listingForm.prev")}
           </button>
           {step < last ? (
-            <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-5 py-2 text-sm font-semibold text-white hover:brightness-110">
+            <button type="button" onClick={goNext} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet to-azure px-5 py-2 text-sm font-semibold text-white hover:brightness-110">
               {t("listingForm.next")} <ArrowRight size={16} />
             </button>
           ) : (
-            <button type="button" onClick={submit} disabled={busy || !basicsOk} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-5 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">
+            <button type="button" onClick={submit} disabled={busy || !basicsOk} className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet to-azure px-5 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-50">
               {busy ? t("listingForm.submitting") : editing ? t("listingForm.save") : t("listingForm.submit")}
             </button>
           )}
@@ -301,8 +327,14 @@ export default function ListingForm({ listing = null, images = [], me = null }) 
       {/* Live preview (lg sticky) */}
       <aside className="hidden lg:block">
         <div className="sticky top-20 space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#38BDF8]">{t("listingForm.previewTitle")}</p>
-          <ListingCard listing={previewListing} seller={me} imageUrl={coverUrl} />
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-azure">{t("listingForm.previewTitle")}</p>
+          <ListingCardView
+                  listing={previewListing}
+                  seller={me}
+                  imageUrl={coverUrl}
+                  priceText={formatMNT(previewListing.price, locale)}
+                  labels={{ fresh: t("card.new"), escrow: t("card.escrow"), status: null, tier: null }}
+                />
         </div>
       </aside>
     </div>

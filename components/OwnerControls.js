@@ -5,18 +5,20 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setListingStatus, softDeleteListing } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
+import { useAction } from "@/lib/hooks";
 import { BadgeCheck, Wrench } from "@/components/icons";
 
 export default function OwnerControls({ listingId, status }) {
   const router = useRouter();
   const t = useT();
+  const call = useAction();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
   async function setStatus(next) {
     setBusy(true);
     setErr("");
-    const res = await setListingStatus(listingId, next);
+    const res = await call(setListingStatus, listingId, next);
     setBusy(false);
     if (res?.error) {
       setErr(res.error);
@@ -29,7 +31,7 @@ export default function OwnerControls({ listingId, status }) {
     if (!confirm(t("owner.confirmDelete"))) return;
     setBusy(true);
     setErr("");
-    const res = await softDeleteListing(listingId);
+    const res = await call(softDeleteListing, listingId);
     setBusy(false);
     if (res?.error) {
       setErr(res.error);
@@ -68,9 +70,9 @@ export default function OwnerControls({ listingId, status }) {
           <button
             onClick={() => setStatus("active")}
             disabled={busy}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-3 py-2 text-sm text-[#7dd3fc] hover:brightness-110 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-azure/30 bg-azure/10 px-3 py-2 text-sm text-[#7dd3fc] hover:brightness-110 disabled:opacity-50"
           >
-            <BadgeCheck size={16} className="text-[#38BDF8]" />
+            <BadgeCheck size={16} className="text-azure" />
             {t("owner.activate")}
           </button>
         )}
@@ -82,7 +84,7 @@ export default function OwnerControls({ listingId, status }) {
           {t("owner.delete")}
         </button>
       </div>
-      {err ? <p className="text-sm text-red-300">{err}</p> : null}
+      {err ? <p role="alert" className="text-sm text-red-300">{err}</p> : null}
     </div>
   );
 }

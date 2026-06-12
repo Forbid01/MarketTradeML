@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { submitReview } from "@/lib/actions";
 import { useT } from "@/lib/i18n/client";
+import { useAction } from "@/lib/hooks";
 import { Star } from "@/components/icons";
 
 // Build Plan 1.14: review — зөвхөн 'completed' захиалгад худалдан авагч өгнө.
@@ -11,6 +12,7 @@ import { Star } from "@/components/icons";
 export default function ReviewForm({ orderId }) {
   const router = useRouter();
   const t = useT();
+  const call = useAction();
   const [stars, setStars] = useState(5);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,7 +22,7 @@ export default function ReviewForm({ orderId }) {
     e.preventDefault();
     setBusy(true);
     setErr(null);
-    const res = await submitReview(orderId, stars, comment.trim() || null);
+    const res = await call(submitReview, orderId, stars, comment.trim() || null);
     setBusy(false);
     if (res?.error) setErr(res.error);
     else router.refresh();
@@ -36,23 +38,25 @@ export default function ReviewForm({ orderId }) {
             key={n}
             onClick={() => setStars(n)}
             className={n <= stars ? "text-amber-500" : "text-slate-300"}
-            aria-label={`${n} од`}
+            aria-pressed={n <= stars}
+            aria-label={t("review.starAria", { n })}
           >
             <Star size={24} filled={n <= stars} />
           </button>
         ))}
       </div>
       <textarea
+        aria-label={t("review.commentPh")}
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         rows={2}
         placeholder={t("review.commentPh")}
-        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-[#6D5DF6] focus:ring-1 focus:ring-[#6D5DF6]"
+        className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-50 outline-none placeholder:text-slate-500 focus:border-violet focus:ring-1 focus:ring-violet"
       />
-      {err && <p className="text-sm text-red-300">{err}</p>}
+      {err && <p role="alert" className="text-sm text-red-300">{err}</p>}
       <button
         disabled={busy}
-        className="rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
+        className="rounded-lg bg-gradient-to-r from-violet to-azure px-4 py-2 text-sm font-medium text-white hover:brightness-110 disabled:opacity-50"
       >
         {t("review.submit")}
       </button>

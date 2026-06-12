@@ -17,7 +17,7 @@ export default async function FavoritesPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-slate-50">{t("favorites.title")}</h1>
       {!listings.length ? (
-        <p className="py-12 text-center text-slate-500">{t("favorites.empty")}</p>
+        <p className="py-12 text-center text-slate-400">{t("favorites.empty")}</p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {listings.map((l) => (

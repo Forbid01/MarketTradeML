@@ -64,11 +64,14 @@ export default async function OrdersPage({ searchParams }) {
     <div className="space-y-5">
       <h1 className="text-xl font-bold text-slate-50">{t("order.title")}</h1>
 
-      <div className="grid grid-cols-3 gap-3">
-        <Stat label={t("order.stat.spent")} value={formatMNT(spent, locale)} />
-        <Stat label={t("order.stat.earned")} value={formatMNT(earned, locale)} />
-        <Stat label={t("order.stat.escrow")} value={formatMNT(escrow, locale)} accent />
-      </div>
+      {/* Захиалга огт байхгүй үед 0₮ статистик утгагүй — нуух */}
+      {orders.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <Stat label={t("order.stat.spent")} value={formatMNT(spent, locale)} />
+          <Stat label={t("order.stat.earned")} value={formatMNT(earned, locale)} />
+          <Stat label={t("order.stat.escrow")} value={formatMNT(escrow, locale)} accent />
+        </div>
+      )}
 
       <div className="flex gap-1 rounded-lg border border-white/10 bg-white/[0.03] p-1">
         {TABS.map((tb) => {
@@ -78,7 +81,7 @@ export default async function OrdersPage({ searchParams }) {
               key={tb}
               href={tb === "all" ? "/orders" : `/orders?tab=${tb}`}
               className={`flex-1 rounded-md px-3 py-1.5 text-center text-xs font-medium transition ${
-                on ? "bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] text-white" : "text-slate-400 hover:text-slate-100"
+                on ? "bg-gradient-to-r from-violet to-azure text-white" : "text-slate-400 hover:text-slate-100"
               }`}
             >
               {t(`order.tab.${tb}`)}
@@ -88,7 +91,17 @@ export default async function OrdersPage({ searchParams }) {
       </div>
 
       {!filtered.length ? (
-        <p className="py-12 text-center text-slate-500">{t("order.empty")}</p>
+        <div className="flex flex-col items-center gap-4 py-12 text-center">
+          <p className="text-slate-400">{t(`order.emptyTab.${tab}`)}</p>
+          {(tab === "all" || tab === "active") && (
+            <Link
+              href="/browse"
+              className="rounded-lg bg-gradient-to-r from-violet to-azure px-5 py-2.5 text-sm font-semibold text-white hover:brightness-110"
+            >
+              {t("order.emptyCta")}
+            </Link>
+          )}
+        </div>
       ) : (
         <ul className="space-y-2">
           {filtered.map((o) => {
@@ -100,7 +113,7 @@ export default async function OrdersPage({ searchParams }) {
               <li key={o.id}>
                 <Link
                   href={`/orders/${o.id}`}
-                  className="block rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-[#6D5DF6]/40 hover:bg-white/[0.06]"
+                  className="block rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-violet/40 hover:bg-white/[0.06]"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
@@ -112,12 +125,12 @@ export default async function OrdersPage({ searchParams }) {
                         {formatMNT(o.amount, locale)} · {formatDateTime(o.created_at, locale)}
                       </p>
                       {actKey && (
-                        <p className={`mt-1 text-xs font-medium ${actionable ? "text-[#38BDF8]" : "text-slate-500"}`}>
+                        <p className={`mt-1 text-xs font-medium ${actionable ? "text-azure" : "text-slate-400"}`}>
                           {actionable ? "→ " : ""}{t(`order.act.${actKey}`)}
                         </p>
                       )}
                       {o.status === "inspecting" && o.inspection_ends && (
-                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-[#F5C451]">
+                        <p className="mt-1 inline-flex items-center gap-1 text-xs text-gold">
                           <Clock size={12} /> {timeLeft(o.inspection_ends, locale)}
                         </p>
                       )}
@@ -133,13 +146,13 @@ export default async function OrdersPage({ searchParams }) {
 
       {tab === "all" && boostOrders.length > 0 && (
         <section className="space-y-2 pt-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-[#38BDF8]">{t("boost.title")}</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-azure">{t("boost.title")}</h2>
           <ul className="space-y-2">
             {boostOrders.map((b) => (
               <li key={b.id}>
                 <Link
                   href={`/boost/${b.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-[#6D5DF6]/40 hover:bg-white/[0.06]"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-violet/40 hover:bg-white/[0.06]"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-slate-50">{t(`boost.${b.service}.title`)}</p>
@@ -161,8 +174,8 @@ export default async function OrdersPage({ searchParams }) {
 function Stat({ label, value, accent }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
-      <div className={`truncate text-sm font-extrabold sm:text-base ${accent ? "bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-transparent" : "text-slate-50"}`}>{value}</div>
-      <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`truncate text-sm font-extrabold sm:text-base ${accent ? "text-gradient-gold" : "text-slate-50"}`}>{value}</div>
+      <div className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400">{label}</div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { isUuid } from "@/lib/validation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getBoostOrder, getBoostReview, getBoostChat } from "@/lib/queries";
@@ -20,6 +21,7 @@ const TONE = {
 
 export default async function BoostOrderPage({ params }) {
   const { id } = await params;
+  if (!isUuid(id)) notFound();
   const { user, profile } = await getCurrentUser();
   if (!user || !profile) redirect("/login?next=/boost");
 
@@ -41,9 +43,9 @@ export default async function BoostOrderPage({ params }) {
       <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#38BDF8]">{t("boost.orderTitle")}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-azure">{t("boost.orderTitle")}</p>
             <h1 className="mt-1 text-lg font-bold uppercase tracking-wide text-slate-50">{t(`boost.${o.service}.title`)}</h1>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               {o.matches} {o.service === "coaching" ? t("boost.coaching.unit") : t("boost.matches")} · {formatDateTime(o.created_at, locale)}
             </p>
           </div>
@@ -51,8 +53,8 @@ export default async function BoostOrderPage({ params }) {
         </div>
 
         <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="text-[10px] uppercase tracking-wide text-slate-500">{t("boost.total")}</div>
-          <div className="bg-gradient-to-r from-[#F5C451] to-[#38BDF8] bg-clip-text text-2xl font-extrabold text-transparent">
+          <div className="text-[10px] uppercase tracking-wide text-slate-400">{t("boost.total")}</div>
+          <div className="text-gradient-gold text-2xl font-extrabold">
             {formatMNT(o.amount, locale)}
           </div>
         </div>
@@ -72,13 +74,13 @@ export default async function BoostOrderPage({ params }) {
         <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{t("boost.booster")}</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">{t("boost.booster")}</p>
               <p className="font-medium text-slate-50">{o.booster_name ?? "—"}</p>
             </div>
             {o.booster_rating != null && (
-              <span className="inline-flex items-center gap-1 text-sm text-[#F5C451]">
-                <Star size={14} filled className="text-[#F5C451]" /> {Number(o.booster_rating).toFixed(1)}
-                <span className="text-xs text-slate-500">({o.booster_reviews ?? 0})</span>
+              <span className="inline-flex items-center gap-1 text-sm text-gold">
+                <Star size={14} filled className="text-gold" /> {Number(o.booster_rating).toFixed(1)}
+                <span className="text-xs text-slate-400">({o.booster_reviews ?? 0})</span>
               </span>
             )}
           </div>
@@ -95,7 +97,7 @@ export default async function BoostOrderPage({ params }) {
               <span className="font-semibold text-slate-100">{t("boost.matchesDone", { done, total: o.matches })}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full rounded-full bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] transition-all" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full bg-gradient-to-r from-violet to-azure transition-all" style={{ width: `${pct}%` }} />
             </div>
           </div>
         );
@@ -120,7 +122,7 @@ export default async function BoostOrderPage({ params }) {
             <h3 className="mb-1 font-semibold text-slate-300">{t("review.yours")}</h3>
             <div className="flex items-center gap-0.5">
               {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} size={16} filled={i < review.stars} className={i < review.stars ? "text-[#F5C451]" : "text-slate-600"} />
+                <Star key={i} size={16} filled={i < review.stars} className={i < review.stars ? "text-gold" : "text-slate-600"} />
               ))}
             </div>
             {review.comment && <p className="mt-1 text-slate-400">{review.comment}</p>}

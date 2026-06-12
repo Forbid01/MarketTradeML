@@ -24,7 +24,7 @@ export default async function AccountPage() {
           value={
             profile?.is_verified ? (
               <span className="inline-flex items-center gap-1">
-                <BadgeCheck size={16} className="text-[#38BDF8]" />
+                <BadgeCheck size={16} className="text-azure" />
                 {t("account.yes")}
               </span>
             ) : (
@@ -36,7 +36,7 @@ export default async function AccountPage() {
           label={t("account.rating")}
           value={
             <span className="inline-flex items-center gap-1">
-              <Star size={14} filled className="text-[#F5C451]" />
+              <Star size={14} filled className="text-gold" />
               {Number(profile?.rating_avg ?? 0).toFixed(1)}
             </span>
           }
