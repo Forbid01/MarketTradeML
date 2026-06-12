@@ -3,7 +3,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { query, queryOne } from "@/lib/db";
-import { checkPayment, summarizePaidRows } from "@/lib/qpay";
+import { confirmInvoice } from "@/lib/payments";
 import { sendEmail, emailShell, escapeHtml } from "@/lib/email";
 
 export const dynamic = "force-dynamic"; // нууц токентой handler — cache хийхгүй
@@ -29,17 +29,9 @@ async function handle(req) {
     const order = await queryOne(`select id, qpay_invoice_id from ${table} where id = $1`, [orderId]);
     if (!order || !order.qpay_invoice_id) return new NextResponse("no invoice", { status: 404 });
 
-    const check = await checkPayment(order.qpay_invoice_id);
-    const { payments, paidTotal } = summarizePaidRows(check);
-    let result = "no_payment";
-    if (payments.length > 0) {
-      const rows = kind === "boost"
-        ? await query(`select public.confirm_boost_payment($1,$2,$3) as r`,
-            [orderId, order.qpay_invoice_id, paidTotal])
-        : await query(`select public.confirm_payment($1,$2,$3,$4::jsonb,$5::jsonb) as r`,
-            [orderId, order.qpay_invoice_id, paidTotal, JSON.stringify(payments), JSON.stringify(check)]);
-      result = rows[0].r;
-    }
+    const result = await confirmInvoice({
+      id: orderId, invoiceId: order.qpay_invoice_id, isBoost: kind === "boost",
+    });
 
     // Төлбөр баталгаажвал и-мэйл мэдэгдэл (best-effort)
     if (result === "paid") {

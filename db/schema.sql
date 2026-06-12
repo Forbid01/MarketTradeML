@@ -259,6 +259,10 @@ create unique index if not exists uq_orders_qpay_invoice on public.orders (qpay_
 create unique index if not exists uq_orders_one_active_per_listing
   on public.orders (listing_id) where status in ('created','paid','transferring','inspecting','disputed');
 create index if not exists idx_orders_inspection on public.orders (inspection_ends) where status = 'inspecting';
+-- Cron-ы reconcile/sweep: 'created' захиалгыг created_at-аар шүүж/эрэмбэлдэг
+create index if not exists idx_orders_created_pending on public.orders (created_at) where status = 'created';
+-- Landing-ийн "сүүлийн арилжаа": sold зар updated_at-аар
+create index if not exists idx_listings_sold_updated on public.listings (updated_at desc) where status = 'sold' and deleted_at is null;
 create unique index if not exists uq_disputes_one_open_per_order
   on public.disputes (order_id) where status = 'open';
 
@@ -647,6 +651,44 @@ begin
 end;
 $$;
 
+-- ───────────── Төлөгдөөгүй хуучирсан захиалгын sweep ─────────────
+-- 'created' төлөвт p_max_age-аас илүү саатсан, invoice-ГҮЙ захиалгыг бөөнөөр нь expired
+-- болгож listing-ийг суллана. Invoice-ТЭЙ захиалгыг cron (app/api/cron) QPay-аас эцсийн
+-- төлбөрийн шалгалт хийсний ДАРАА expire_stale_order()-оор нэг нэгээр нь хаана —
+-- ингэснээр сүүлийн мөчид төлөгдсөн төлбөрийг алдахгүй.
+create or replace function public.sweep_stale_orders(p_max_age interval default interval '24 hours')
+returns int language plpgsql as $$
+declare r record; n int := 0;
+begin
+  for r in select id, listing_id from public.orders
+           where status = 'created' and qpay_invoice_id is null
+             and created_at < now() - p_max_age
+           for update skip locked
+  loop
+    update public.orders set status = 'expired' where id = r.id;
+    update public.listings set status = 'active' where id = r.listing_id and status = 'reserved';
+    n := n + 1;
+  end loop;
+  return n;
+end;
+$$;
+
+-- Invoice-тэй хуучирсан захиалгыг тус тусад нь хаах. FOR UPDATE + status='created' шалгалттай
+-- тул зэрэгцээ callback/confirm_payment түрүүлж баталгаажуулсан бол false буцаагаад өнгөрнө.
+create or replace function public.expire_stale_order(p_order_id uuid, p_max_age interval default interval '24 hours')
+returns boolean language plpgsql as $$
+declare o public.orders;
+begin
+  select * into o from public.orders
+   where id = p_order_id and status = 'created' and created_at < now() - p_max_age
+   for update;
+  if not found then return false; end if;
+  update public.orders set status = 'expired' where id = o.id;
+  update public.listings set status = 'active' where id = o.listing_id and status = 'reserved';
+  return true;
+end;
+$$;
+
 -- ───────────── QPay төлбөр баталгаажуулах (idempotent, НИЙЛБЭР) ─────────────
 create or replace function public.confirm_payment(
   p_order_id uuid, p_qpay_invoice_id text, p_paid_total bigint, p_payments jsonb, p_raw jsonb)
@@ -760,6 +802,7 @@ create table if not exists public.boost_orders (
   updated_at      timestamptz not null default now()
 );
 create index if not exists idx_boost_orders_buyer on public.boost_orders (buyer_id);
+create index if not exists idx_boost_orders_created_pending on public.boost_orders (created_at) where status = 'created';
 create unique index if not exists uq_boost_qpay_invoice
   on public.boost_orders (qpay_invoice_id) where qpay_invoice_id is not null;
 
@@ -768,18 +811,47 @@ do $$ begin
     for each row execute function public.set_updated_at();
 exception when duplicate_object then null; end $$;
 
+-- Boost мөнгөн урсгалын бүртгэл: payment_events-д boost_order_id, boost_orders-д бодит
+-- төлсөн дүн — account захиалгын адил санхүүгийн мөр үлдээнэ (маргаан/тайлан сэргээх боломжтой).
+alter table public.payment_events add column if not exists boost_order_id uuid references public.boost_orders(id) on delete set null;
+create index if not exists idx_payment_events_boost
+  on public.payment_events (boost_order_id) where boost_order_id is not null;
+alter table public.boost_orders add column if not exists paid_total bigint;
+
 -- Boost төлбөр баталгаажуулах (idempotent — created→paid зөвхөн нэг удаа, FOR UPDATE).
+-- payment_events-д мөр бүрийг бүртгэж (payment_id dedup), илүү төлбөрт админд мэдэгдэнэ
+-- (boost-д dispute механизм байхгүй тул захиалга paid хэвээр, гар шийдвэрлэлт).
+drop function if exists public.confirm_boost_payment(uuid, text, bigint);
 create or replace function public.confirm_boost_payment(
-  p_order_id uuid, p_qpay_invoice_id text, p_paid_total bigint)
+  p_order_id uuid, p_qpay_invoice_id text, p_paid_total bigint,
+  p_payments jsonb default null, p_raw jsonb default null)
 returns text language plpgsql as $$
-declare o public.boost_orders;
+declare o public.boost_orders; p jsonb;
 begin
+  if p_payments is not null then
+    for p in select value from jsonb_array_elements(p_payments) as t(value) loop
+      insert into public.payment_events(boost_order_id, qpay_payment_id, qpay_invoice_id, amount, status, raw_payload)
+      values (p_order_id, p->>'payment_id', p_qpay_invoice_id,
+              coalesce(nullif(p->>'amount','')::bigint, 0), coalesce(p->>'status','PAID'), p)
+      on conflict (qpay_payment_id) do nothing;
+    end loop;
+  end if;
+
   select * into o from public.boost_orders where id = p_order_id for update;
   if not found then return 'order_not_found'; end if;
   if o.status <> 'created' then return 'noop'; end if;
   if p_paid_total < o.amount then return 'underpaid'; end if;
-  update public.boost_orders set status = 'paid',
+
+  update public.boost_orders set status = 'paid', paid_total = p_paid_total,
     qpay_invoice_id = coalesce(qpay_invoice_id, p_qpay_invoice_id) where id = o.id;
+
+  if p_paid_total > o.amount then
+    insert into public.notifications (user_id, type, title, body)
+    select u.id, 'boost_overpaid', 'Boost илүү төлбөр',
+           'Boost захиалга ' || o.id || ': төлсөн ' || p_paid_total || ' > үнэ ' || o.amount
+      from public.users u where u.role = 'admin';
+    return 'overpaid';
+  end if;
   return 'paid';
 end;
 $$;
@@ -788,7 +860,16 @@ $$;
 alter table public.boost_orders add column if not exists progress      int not null default 0;
 alter table public.boost_orders add column if not exists payout_status public.payout_status not null default 'pending';
 
--- Booster-т олголт бүртгэх (зөвхөн админ, completed boost). payout_status='paid_out'.
+-- payouts-ийг boost-д ч ашиглана (messages_one_parent-тэй ижил загвар): order_id ЭСВЭЛ
+-- boost_order_id-ийн аль нэг нь. audit_payout trigger boost олголтыг ч автоматаар бүртгэнэ.
+alter table public.payouts alter column order_id drop not null;
+alter table public.payouts add column if not exists boost_order_id uuid unique references public.boost_orders(id) on delete restrict;
+do $$ begin
+  alter table public.payouts add constraint payouts_one_parent
+    check ((order_id is not null) <> (boost_order_id is not null));
+exception when duplicate_object then null; end $$;
+
+-- Booster-т олголт бүртгэх (зөвхөн админ, completed boost). payouts мөр + payout_status.
 create or replace function public.admin_record_boost_payout(p_order_id uuid, p_actor_id uuid)
 returns void language plpgsql as $$
 declare o public.boost_orders;
@@ -799,7 +880,48 @@ begin
   if not found then raise exception 'захиалга олдсонгүй'; end if;
   if o.status <> 'completed' then raise exception 'зөвхөн дууссан boost-д олголт (одоо: %)', o.status; end if;
   if o.payout_status = 'paid_out' then raise exception 'аль хэдийн олгосон'; end if;
+  if o.booster_id is null then raise exception 'booster хуваарилаагүй байна'; end if;
+  insert into public.payouts (boost_order_id, recipient_id, amount, fee_deducted, net_amount, status, paid_by, paid_at)
+  values (o.id, o.booster_id, o.amount, 0, o.amount, 'paid_out', p_actor_id, now());
   update public.boost_orders set payout_status = 'paid_out' where id = o.id;
+end;
+$$;
+
+-- Boost: төлөгдөөгүй хуучирсан захиалгыг cancelled болгоно (boost status check-д 'expired' алга,
+-- listing суллах зүйлгүй). Хэрэглэсэн promo слотыг буцаана — эс бөгөөс орхисон checkout-ууд
+-- хязгаартай promo-г "идэж" дуусгадаг. Invoice-тэйг cron эцсийн шалгалтын дараа
+-- expire_stale_boost_order()-оор.
+create or replace function public.sweep_stale_boost_orders(p_max_age interval default interval '24 hours')
+returns int language plpgsql as $$
+declare n int := 0;
+begin
+  with cancelled as (
+    update public.boost_orders set status = 'cancelled'
+     where status = 'created' and qpay_invoice_id is null
+       and created_at < now() - p_max_age
+     returning config->>'promo' as promo
+  ), refund as (
+    update public.promo_codes pc set used_count = greatest(0, pc.used_count - sub.cnt)
+      from (select promo, count(*)::int as cnt from cancelled where promo is not null group by promo) sub
+     where pc.code = sub.promo
+  )
+  select count(*) into n from cancelled;
+  return n;
+end;
+$$;
+
+create or replace function public.expire_stale_boost_order(p_order_id uuid, p_max_age interval default interval '24 hours')
+returns boolean language plpgsql as $$
+declare o public.boost_orders;
+begin
+  select * into o from public.boost_orders
+   where id = p_order_id and status = 'created' and created_at < now() - p_max_age
+   for update;
+  if not found then return false; end if;
+  update public.boost_orders set status = 'cancelled' where id = o.id;
+  update public.promo_codes set used_count = greatest(0, used_count - 1)
+   where code = (o.config->>'promo');
+  return true;
 end;
 $$;
 

@@ -9,6 +9,12 @@ const nextConfig = {
   experimental: {
     serverActions: { bodySizeLimit: "8mb" },
   },
+  // Vercel Blob дээрх зарын зургуудыг next/image optimizer-ээр (resize + WebP/AVIF) дамжуулна.
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.public.blob.vercel-storage.com" },
+    ],
+  },
 };
 
 export default nextConfig;
