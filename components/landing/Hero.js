@@ -65,9 +65,9 @@ export default function Hero() {
     <section ref={wrapRef} className="relative overflow-hidden px-4 pb-24 pt-16 sm:pt-24">
       {/* Aurora + grid */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-[6%] top-[4%] h-80 w-80 rounded-full bg-[#6D5DF6]/25 blur-[110px] motion-safe:animate-[auroraDrift_22s_ease-in-out_infinite]" />
-        <div className="absolute right-[4%] top-[14%] h-96 w-96 rounded-full bg-[#38BDF8]/18 blur-[120px] motion-safe:animate-[auroraDrift_28s_ease-in-out_infinite]" />
-        <div className="absolute bottom-0 left-[40%] h-80 w-80 rounded-full bg-[#F5C451]/12 blur-[110px] motion-safe:animate-[auroraDrift_32s_ease-in-out_infinite]" />
+        <div className="absolute left-[6%] top-[4%] h-80 w-80 rounded-full bg-violet/25 blur-[110px] motion-safe:animate-[auroraDrift_22s_ease-in-out_infinite]" />
+        <div className="absolute right-[4%] top-[14%] h-96 w-96 rounded-full bg-azure/18 blur-[120px] motion-safe:animate-[auroraDrift_28s_ease-in-out_infinite]" />
+        <div className="absolute bottom-0 left-[40%] h-80 w-80 rounded-full bg-gold/12 blur-[110px] motion-safe:animate-[auroraDrift_32s_ease-in-out_infinite]" />
         <div
           className="absolute inset-0 opacity-[0.06]"
           style={{
@@ -82,12 +82,17 @@ export default function Hero() {
       <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
         {/* Copy */}
         <div className="text-center lg:text-left">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#F5C451]/30 bg-[#F5C451]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[#F5C451]">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#F5C451] motion-safe:animate-[glowPulse_3s_ease-in-out_infinite]" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold">
+            <span className="h-1.5 w-1.5 rounded-full bg-gold motion-safe:animate-[glowPulse_3s_ease-in-out_infinite]" />
             {t("landing.heroBadge")}
           </span>
-          <h1 className="mt-5 text-4xl font-extrabold uppercase leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl">
-            <span className="text-mythic">{t("landing.heroHeadline")}</span>
+          {/* Том касс дунд serif-курсив өргөлттэй үг — raven-trading-ийн display typography маяг */}
+          <h1 className="mt-5 text-4xl font-extrabold uppercase leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl">
+            <span className="text-mythic">{t("landing.heroH1a")}</span>{" "}
+            <em className="font-serif font-medium normal-case italic tracking-normal text-gold">
+              {t("landing.heroH1accent")}
+            </em>{" "}
+            <span className="text-mythic">{t("landing.heroH1b")}</span>
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-slate-400 lg:mx-0">
             {t("landing.heroSub")}
@@ -95,7 +100,7 @@ export default function Hero() {
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row lg:items-start">
             <Link
               href="/browse"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_40px_-8px_rgba(109,93,246,0.7)] transition hover:brightness-110 sm:w-auto"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet to-azure px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-[0_10px_40px_-8px_rgba(109,93,246,0.7)] transition hover:brightness-110 sm:w-auto"
             >
               {t("landing.ctaBrowse")}
               <ArrowRight size={18} className="transition group-hover:translate-x-0.5" />
@@ -129,7 +134,7 @@ export default function Hero() {
             <span
               key={i}
               aria-hidden
-              className="absolute bottom-10 h-1 w-1 rounded-full bg-[#F5C451] motion-safe:animate-[emberRise_5s_ease-in_infinite]"
+              className="absolute bottom-10 h-1 w-1 rounded-full bg-gold motion-safe:animate-[emberRise_5s_ease-in_infinite]"
               style={{ left: `${left}%`, animationDelay: `${i * 0.7}s` }}
             />
           ))}
@@ -144,22 +149,22 @@ export default function Hero() {
           {/* floating stat card */}
           <div className="absolute -bottom-2 right-0 z-20 w-44 rounded-xl border border-white/10 bg-[#0B0E1A]/80 p-3 backdrop-blur motion-safe:animate-[floaty_7s_ease-in-out_infinite]">
             <div className="flex items-center justify-between">
-              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-[#F5C451]">
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase text-gold">
                 <BadgeCheck size={11} /> Verified
               </span>
-              <span className="text-[10px] text-slate-500">Lv.82</span>
+              <span className="text-[10px] text-slate-400">Lv.82</span>
             </div>
             <div className="mt-2 space-y-1.5">
               {BARS.map(([label, pct]) => (
-                <div key={label} className="flex items-center gap-1.5 text-[9px] text-slate-500">
+                <div key={label} className="flex items-center gap-1.5 text-[9px] text-slate-400">
                   <span className="w-9">{label}</span>
                   <div className="h-1 flex-1 rounded-full bg-white/10">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8]" style={{ width: pct }} />
+                    <div className="h-full rounded-full bg-gradient-to-r from-violet to-azure" style={{ width: pct }} />
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex items-center justify-center gap-1 rounded-md border border-[#38BDF8]/30 bg-[#38BDF8]/10 py-1 text-[9px] font-semibold uppercase text-[#38BDF8]">
+            <div className="mt-2 flex items-center justify-center gap-1 rounded-md border border-azure/30 bg-azure/10 py-1 text-[9px] font-semibold uppercase text-azure">
               <Lock size={10} /> Escrow protected
             </div>
           </div>

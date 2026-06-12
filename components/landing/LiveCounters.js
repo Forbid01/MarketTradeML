@@ -22,7 +22,7 @@ function Counter({ value, label, format, prefix = "", suffix = "", locale, reduc
 
   return (
     <div ref={ref} className="text-center">
-      <div className="bg-gradient-to-br from-[#F5C451] to-[#38BDF8] bg-clip-text text-2xl font-extrabold tracking-tight text-transparent sm:text-4xl">{display}</div>
+      <div className="text-gradient-gold text-2xl font-extrabold tracking-tight sm:text-4xl">{display}</div>
       <div className="mt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400 sm:text-xs">{label}</div>
     </div>
   );
@@ -53,7 +53,7 @@ export default function LiveCounters({ stats }) {
 
   return (
     <div>
-      <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-[#38BDF8]">{t("landing.live.eyebrow")}</p>
+      <p className="text-center text-xs font-semibold uppercase tracking-[0.22em] text-azure">{t("landing.live.eyebrow")}</p>
       <div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:gap-4 sm:p-8">
         {cells.map((c, i) => (
           <Counter key={i} value={c.value} label={c.label} format={c.format} prefix={c.prefix} suffix={c.suffix} locale={locale} reduce={reduce} />

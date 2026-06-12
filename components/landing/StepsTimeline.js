@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Reveal from "@/components/landing/Reveal";
+import ScrambleText from "@/components/landing/ScrambleText";
 import { register, prefersReducedMotion } from "@/components/landing/scrollManager";
 
 // "Хэрхэн ажилладаг" хэсэг: холбогч шугам нь гүйлгэх явцыг дагаж зүүнээс баруунруу
@@ -26,25 +27,28 @@ export default function StepsTimeline({ eyebrow, title, steps }) {
     <div ref={wrapRef} className="mx-auto max-w-6xl">
       <Reveal>
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#F5C451]">{eyebrow}</p>
-          <h2 className="mt-3 text-3xl font-extrabold uppercase tracking-tight text-slate-50 sm:text-4xl">{title}</h2>
+          <ScrambleText as="p" text={eyebrow} className="text-xs font-semibold uppercase tracking-[0.22em] text-gold" />
+          <ScrambleText as="h2" text={title} duration={1100} className="mt-3 text-3xl font-extrabold uppercase tracking-tight text-slate-50 sm:text-4xl" />
         </div>
       </Reveal>
 
-      <div className="relative mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {/* хэвтээ шугам (lg) — суурь + scrubbed дүүргэлт */}
-        <div aria-hidden className="absolute left-0 right-0 top-7 hidden h-px bg-white/10 lg:block">
-          <div ref={fillH} className="h-full origin-left bg-gradient-to-r from-[#6D5DF6] via-[#38BDF8] to-[#F5C451]" style={{ transform: "scaleX(0)" }} />
+      <div className="relative mt-14 grid gap-6 pl-7 sm:grid-cols-2 sm:pl-0 lg:grid-cols-4">
+        {/* хэвтээ шугам (lg) — суурь + scrubbed дүүргэлт. Картуудын ДЭЭРХ зайны голд
+            (-top-7) байрлана: картын дэвсгэр тунгалаг тул дундуур нь гарвал зүссэн мэт
+            харагдаж байсан. */}
+        <div aria-hidden className="absolute -top-7 left-0 right-0 hidden h-px bg-white/10 lg:block">
+          <div ref={fillH} className="h-full origin-left bg-gradient-to-r from-violet via-azure to-gold" style={{ transform: "scaleX(0)" }} />
         </div>
-        {/* босоо шугам (sm-аас доош) */}
-        <div aria-hidden className="absolute left-7 top-0 bottom-0 w-px bg-white/10 sm:hidden">
-          <div ref={fillV} className="w-full origin-top bg-gradient-to-b from-[#6D5DF6] via-[#38BDF8] to-[#F5C451]" style={{ transform: "scaleY(0)" }} />
+        {/* босоо шугам (sm-аас доош) — картуудын ЗҮҮН талын зайд (pl-7 rail),
+            дундуур нь зүсэхгүй */}
+        <div aria-hidden className="absolute left-2 top-0 bottom-0 w-px bg-white/10 sm:hidden">
+          <div ref={fillV} className="w-full origin-top bg-gradient-to-b from-violet via-azure to-gold" style={{ transform: "scaleY(0)" }} />
         </div>
 
         {steps.map((s, i) => (
-          <Reveal key={s.n} delay={i * 120} variant="up">
-            <div className="relative h-full rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition hover:border-[#6D5DF6]/40 hover:bg-white/[0.05]">
-              <div className="bg-gradient-to-br from-[#F5C451] to-[#6D5DF6] bg-clip-text text-4xl font-black tracking-tight text-transparent">{s.n}</div>
+          <Reveal key={s.n} delay={i * 120} variant={i === 0 ? "left" : i === steps.length - 1 ? "right" : "up"}>
+            <div className="relative h-full rounded-2xl border border-white/10 bg-white/[0.02] p-6 transition hover:border-violet/40 hover:bg-white/[0.05]">
+              <div className="bg-gradient-to-br from-gold to-violet bg-clip-text text-4xl font-black tracking-tight text-transparent">{s.n}</div>
               <h3 className="mt-3 text-base font-bold uppercase tracking-wide text-slate-50">{s.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-400">{s.body}</p>
             </div>

@@ -12,6 +12,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  /* Брэнд өнгийг Tailwind токен болгож бүртгэнэ → bg-violet, text-gold, from-azure,
+     ring-azure/30 г.м named utility үүснэ. Өнгө солих = :root-ийн 1 мөр. */
+  --color-gold: var(--gold);
+  --color-violet: var(--violet);
+  --color-azure: var(--azure);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -25,6 +30,17 @@ body {
     var(--background);
   color: var(--foreground);
   min-height: 100vh;
+}
+
+/* Keyboard фокусын харагдах ring — :focus-visible тул хулганын товшилтод гарахгүй.
+   Input-ууд өөрийн focus:ring-тэй тул элементийн төрлөөр хязгаарлав. */
+button:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--azure);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* ─────────────────────────── Motion keyframes ─────────────────────────── */
@@ -86,7 +102,11 @@ body {
 /* ─────────────────────────── Page transition ─────────────────────────── */
 /* template.js нь навигаци бүрт remount хийдэг тул энэ нэг удаагийн animation дахин тоглоно. */
 .page-enter {
-  animation: pageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* fill-mode "both" БИШ "backwards": "both" нь transform/filter animation-ийг үүрд
+     "идэвхтэй" барьж .page-enter-ийг fixed элементүүдийн containing block болгодог —
+     дотор нь буй position:fixed (SectionDots, ScrollProgress г.м) viewport биш
+     контентдоо анчордог байсан. "backwards" дуусмагц эффект арилж fixed хэвийн ажиллана. */
+  animation: pageEnter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 @keyframes pageEnter {
   from { opacity: 0; transform: translateY(16px) scale(0.994); filter: blur(7px); }
@@ -133,6 +153,12 @@ body {
 .tilt-card {
   transform: perspective(1100px) rotateX(var(--tiltX,0deg)) rotateY(var(--tiltY,0deg));
   transition: transform 0.18s ease-out; transform-style: preserve-3d;
+}
+
+/* Статик gold→azure clip gradient (тоо/жижиг гарчигт — sheen анимэйшнгүй) */
+.text-gradient-gold {
+  background: linear-gradient(92deg, var(--gold), var(--azure));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
 /* Gradient text helper (CAPS гарчигт) */

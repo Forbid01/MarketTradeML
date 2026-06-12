@@ -66,7 +66,7 @@ export default function InstallPrompt() {
   return (
     <div className="fixed inset-x-3 bottom-3 z-30 mx-auto max-w-md rounded-xl border border-white/10 bg-[#0B0E1A]/95 p-3 shadow-lg backdrop-blur">
       <div className="flex items-start gap-3">
-        <span className="text-[#38BDF8]">
+        <span className="text-azure">
           <Smartphone size={22} />
         </span>
         <div className="flex-1">
@@ -83,7 +83,7 @@ export default function InstallPrompt() {
         {!iosHint && deferred && (
           <button
             onClick={install}
-            className="rounded-lg bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8] px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+            className="rounded-lg bg-gradient-to-r from-violet to-azure px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
           >
             {t("install.install")}
           </button>

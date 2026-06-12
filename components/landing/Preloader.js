@@ -30,13 +30,13 @@ export default function Preloader() {
       aria-hidden
     >
       <div className="flex flex-col items-center gap-5">
-        <div className="text-[#38BDF8] motion-safe:animate-[floaty_2.4s_ease-in-out_infinite]">
+        <div className="text-azure motion-safe:animate-[floaty_2.4s_ease-in-out_infinite]">
           <Logo size={56} />
         </div>
         <div className="text-mythic text-2xl font-extrabold uppercase tracking-[0.3em]">MLBB</div>
         <div className="h-[3px] w-40 overflow-hidden rounded-full bg-white/10">
           <div
-            className="h-full origin-left bg-gradient-to-r from-[#6D5DF6] via-[#38BDF8] to-[#F5C451]"
+            className="h-full origin-left bg-gradient-to-r from-violet via-azure to-gold"
             style={{ animation: "preloaderBar 1.15s cubic-bezier(0.7,0,0.3,1) forwards" }}
           />
         </div>

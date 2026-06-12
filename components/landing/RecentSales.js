@@ -15,7 +15,7 @@ export default function RecentSales({ sales, label, locale }) {
           <span key={i} className="inline-flex items-center gap-2">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
             <span className="max-w-[180px] truncate font-medium text-slate-200">{s.title}</span>
-            <span className="font-semibold text-[#38BDF8]">{formatMNT(s.price, locale)}</span>
+            <span className="font-semibold text-azure">{formatMNT(s.price, locale)}</span>
             <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-300">{label}</span>
           </span>
         ))}

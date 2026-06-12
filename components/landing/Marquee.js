@@ -19,7 +19,7 @@ export default function Marquee() {
       <div className="marquee-track flex w-max items-center gap-8 whitespace-nowrap">
         {row.map((txt, i) => (
           <span key={i} className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
-            <ShieldCheck size={15} className="shrink-0 text-[#38BDF8]" />
+            <ShieldCheck size={15} className="shrink-0 text-azure" />
             {txt}
           </span>
         ))}

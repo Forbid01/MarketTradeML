@@ -61,7 +61,7 @@ export default function HeroShowcase() {
               aria-label={`${h.name} · ${h.rank}`}
               aria-hidden={!front}
               tabIndex={front ? 0 : -1}
-              className="group absolute left-1/2 top-1/2 h-[430px] w-[300px] origin-center overflow-hidden rounded-[1.4rem] border border-white/12 bg-[#0B0E1A] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] outline-none focus-visible:ring-2 focus-visible:ring-[#6D5DF6]"
+              className="group absolute left-1/2 top-1/2 h-[430px] w-[300px] origin-center overflow-hidden rounded-[1.4rem] border border-white/12 bg-[#0B0E1A] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] outline-none focus-visible:ring-2 focus-visible:ring-violet"
               style={{
                 transform: cardTransform(s),
                 opacity: s.op,
@@ -107,9 +107,9 @@ export default function HeroShowcase() {
                   {/* доод хаяг (картан дотор) */}
                   <div className="absolute inset-x-0 bottom-0 p-4 text-left">
                     <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#06070E]/70 px-3 py-1 backdrop-blur">
-                      <BadgeCheck size={13} className="text-[#38BDF8]" />
+                      <BadgeCheck size={13} className="text-azure" />
                       <span className="text-xs font-semibold uppercase tracking-wide text-slate-100">{h.name}</span>
-                      <span className="text-xs font-semibold text-[#F5C451]">· {h.rank}</span>
+                      <span className="text-xs font-semibold text-gold">· {h.rank}</span>
                     </div>
                   </div>
                 </>
@@ -130,7 +130,7 @@ export default function HeroShowcase() {
               aria-label={h.name}
               aria-current={i === idx}
               className={`h-1.5 rounded-full transition-all ${
-                i === idx ? "w-6 bg-gradient-to-r from-[#6D5DF6] to-[#38BDF8]" : "w-1.5 bg-white/25 hover:bg-white/40"
+                i === idx ? "w-6 bg-gradient-to-r from-violet to-azure" : "w-1.5 bg-white/25 hover:bg-white/40"
               }`}
             />
           ))}
